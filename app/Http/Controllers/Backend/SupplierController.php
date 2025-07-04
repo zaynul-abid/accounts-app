@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
+use App\Models\SupplierTransaction;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -24,7 +25,21 @@ class SupplierController extends Controller
             'status' => 'required|boolean',
         ]);
 
+        // Create supplier
         $supplier = Supplier::create($validated);
+
+        // Create supplier transaction for opening balance
+        SupplierTransaction::create([
+            'supplier_id' => $supplier->id,
+            'date' => now(),
+            'bill_number' => null,
+            'transaction_mode' => null,
+            'expense_id' => null,
+            'transaction_type' => 'opening balance',
+            'debit' => $validated['opening_balance'],
+            'credit' => 0,
+            'notes' => 'Opening balance for new supplier'
+        ]);
 
         return response()->json([
             'success' => true,
@@ -51,7 +66,34 @@ class SupplierController extends Controller
                 'status' => 'required|boolean',
             ]);
 
+            // Update supplier
             $supplier->update($validated);
+
+            // Update or create opening balance transaction
+            $transaction = SupplierTransaction::where('supplier_id', $supplier->id)
+                ->where('transaction_type', 'opening balance')
+                ->first();
+
+            if ($transaction) {
+                $transaction->update([
+                    'debit' => $validated['opening_balance'],
+                    'credit' => 0,
+                    'date' => now(),
+                    'notes' => 'Updated opening balance'
+                ]);
+            } else {
+                SupplierTransaction::create([
+                    'supplier_id' => $supplier->id,
+                    'date' => now(),
+                    'bill_number' => null,
+                    'transaction_mode' => null,
+                    'expense_id' => null,
+                    'transaction_type' => 'opening balance',
+                    'debit' => $validated['opening_balance'],
+                    'credit' => 0,
+                    'notes' => 'Opening balance for updated supplier'
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

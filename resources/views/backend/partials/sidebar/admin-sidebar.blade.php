@@ -105,6 +105,16 @@
                         <p> Suppliers</p>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a href="{{route('suppliers.details')}}" class="nav-link {{ request()->routeIs(' suppliers.details') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shopping-cart"></i>
+                        <p> Suppliers Details</p>
+                    </a>
+                </li>
+
+
+
 {{--                @php--}}
 {{--                    $productRoutes = ['products.index', 'categories.index', 'sizes.index', 'brands.index', 'colors.index'];--}}
 {{--                @endphp--}}

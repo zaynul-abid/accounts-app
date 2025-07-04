@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expense extends Model
 {
-    use softDeletes;
+    use SoftDeletes;
 
     protected $table = 'expenses';
     protected $guarded = [];
@@ -33,5 +33,13 @@ class Expense extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 
+    public function supplierTransactions()
+    {
+        return $this->hasMany(SupplierTransaction::class);
+    }
 }

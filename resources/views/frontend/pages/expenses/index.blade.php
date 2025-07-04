@@ -38,7 +38,7 @@
             content: " *";
             color: #dc3545;
         }
-        #bankAccountField {
+        #supplierField {
             display: none;
         }
         .table {
@@ -137,6 +137,7 @@
             font-weight: 600;
         }
     </style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
 <div class="container">
@@ -153,10 +154,6 @@
                 @csrf
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label for="voucher_number" class="form-label required-field">Voucher Number</label>
-                        <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
-                    </div>
-                    <div class="col-md-4">
                         <label for="expense_type_id" class="form-label required-field">Expense Type</label>
                         <div class="input-group">
                             <select class="form-select" id="expense_type_id" name="expense_type_id" required>
@@ -169,6 +166,10 @@
                                 <i class="fas fa-plus-circle"></i>
                             </button>
                         </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="voucher_number" class="form-label required-field">Voucher Number</label>
+                        <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
                     </div>
                     <div class="col-md-4">
                         <label for="date_time" class="form-label required-field">Date & Time</label>
@@ -199,7 +200,31 @@
                         <label for="payment_amount" class="form-label required-field">Amount</label>
                         <input type="number" step="0.01" class="form-control" id="payment_amount" name="payment_amount" required>
                     </div>
-                    <div class="col-md-6" id="bankAccountField">
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="toggle_supplier" value="1">
+                            <label class="form-check-label" for="toggle_supplier">Is Supplier Involved?</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4" id="supplierField">
+                        <label for="supplier_id" class="form-label required-field">Supplier</label>
+                        <div class="input-group">
+                            <select class="form-select" id="supplier_id" name="supplier_id">
+                                <option value="">Select Supplier</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#supplierModal" data-action="create">
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="narration" class="form-label">Narration</label>
+                        <textarea class="form-control" id="narration" name="narration" rows="3" placeholder="Enter any additional details..."></textarea>
+                    </div>
+                    <div class="col-md-4" id="bankAccountField">
                         <label for="bank_account_id" class="form-label required-field">Bank Account</label>
                         <div class="input-group">
                             <select class="form-select" id="bank_account_id" name="bank_account_id">
@@ -212,10 +237,6 @@
                                 <i class="fas fa-plus-circle"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="narration" class="form-label">Narration</label>
-                        <textarea class="form-control" id="narration" name="narration" rows="3" placeholder="Enter any additional details..."></textarea>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3 gap-2">
@@ -255,6 +276,7 @@
                         <th scope="col">Expense</th>
                         <th scope="col">Amount</th>
                         <th scope="col">Payment Mode</th>
+                        <th scope="col">Supplier</th>
                         <th scope="col">Narration</th>
                         @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                             <th scope="col">Actions</th>
@@ -271,6 +293,7 @@
                             <td>
                                 <span class="badge {{ $expense->payment_mode == 'cash' ? 'bg-success' : ($expense->payment_mode == 'bank' ? 'bg-primary' : 'bg-info') }}">{{ ucfirst($expense->payment_mode) }}</span>
                             </td>
+                            <td>{{ $expense->supplier->name ?? 'N/A' }}</td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $expense->narration ?? '-' }}">
                                     View Narration
@@ -430,6 +453,57 @@
             </form>
         </div>
     </div>
+
+    <!-- Supplier Modal -->
+    <div class="modal fade" id="supplierModal" tabindex="-1" aria-labelledby="supplierModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="supplierForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="supplierModalTitle">Add New Supplier</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="supplierFormSuccess" class="alert alert-success d-none"></div>
+                        <div id="supplierFormError" class="alert alert-danger d-none"></div>
+                        <div class="mb-3">
+                            <label for="supplierNameField" class="form-label required-field">Name</label>
+                            <input type="text" name="name" class="form-control" id="supplierNameField" required />
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierContactField" class="form-label required-field">Contact Number</label>
+                            <input type="text" name="contact_number" class="form-control" id="supplierContactField" required />
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierAddressField" class="form-label">Address</label>
+                            <textarea name="address" class="form-control" id="supplierAddressField" rows="3"></textarea>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierOpeningField" class="form-label required-field">Opening Balance</label>
+                            <input type="number" step="0.01" name="opening_balance" class="form-control" id="supplierOpeningField" required />
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierStatusField" class="form-label required-field">Status</label>
+                            <select name="status" class="form-select" id="supplierStatusField" required>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btn-sm" id="supplierSubmitButton">Save</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -463,6 +537,14 @@
             $('#bankAccountField').toggle(mode === 'bank');
             if (mode !== 'bank') $('#bank_account_id').val('');
         }
+
+        // Show/hide supplier field based on checkbox
+        $('#toggle_supplier').change(function() {
+            $('#supplierField').toggle(this.checked);
+            if (!this.checked) {
+                $('#supplier_id').val('');
+            }
+        });
 
         // Initial call to set default state
         updatePaymentModeFields();
@@ -647,8 +729,80 @@
             });
         });
 
+        // Supplier Modal handling
+        $('#supplierModal').on('show.bs.modal', function (event) {
+            $('#supplierForm')[0].reset();
+            $('#supplierFormError').addClass('d-none').text('');
+            $('.is-invalid').removeClass('is-invalid');
+            $('#supplierModalTitle').text('Add New Supplier');
+        });
+
+        // Supplier Form submission
+        $('#supplierForm').on('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const submitBtn = $('#supplierSubmitButton');
+            const originalBtnText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+            $.ajax({
+                url: "{{ route('suppliers.store') }}",
+                method: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
+                },
+                success: function (response) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        $('#supplierModal').modal('hide');
+                        const $select = $('#supplier_id');
+                        const newOption = new Option(
+                            response.supplier.name,
+                            response.supplier.id,
+                            true,
+                            true
+                        );
+                        $select.find(`option[value="${response.supplier.id}"]`).remove();
+                        $select.append(newOption).trigger('change');
+                    });
+                },
+                error: function (xhr) {
+                    let errorMessage = 'Something went wrong. Please try again.';
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        let errorHtml = '<ul class="mb-0">';
+                        $.each(errors, function(field, messages) {
+                            const fieldId = 'supplier' + field.charAt(0).toUpperCase() + field.slice(1) + 'Field';
+                            if ($('#' + fieldId).length) {
+                                $('#' + fieldId).addClass('is-invalid');
+                                $('#' + fieldId).next('.invalid-feedback').text(messages[0]);
+                            }
+                            $.each(messages, function(index, message) {
+                                errorHtml += '<li>' + message + '</li>';
+                            });
+                        });
+                        errorHtml += '</ul>';
+                        $('#supplierFormError').removeClass('d-none').html(errorHtml);
+                    } else {
+                        $('#supplierFormError').removeClass('d-none').html(errorMessage);
+                    }
+                },
+                complete: function() {
+                    submitBtn.prop('disabled', false).html(originalBtnText);
+                }
+            });
+        });
+
         // Clear forms when modals are closed
-        $('#expenseTypeModal, #bankAccountModal, #narrationModal').on('hidden.bs.modal', function () {
+        $('#expenseTypeModal, #bankAccountModal, #narrationModal, #supplierModal').on('hidden.bs.modal', function () {
             $(this).find('form')[0]?.reset();
             $(this).find('.alert').addClass('d-none').text('');
             $(this).find('.is-invalid').removeClass('is-invalid');
@@ -679,6 +833,9 @@
                     $('#expenseForm')[0].reset();
                     $('#bankAccountField').hide();
                     $('#bank_account_id').val('');
+                    $('#supplierField').hide();
+                    $('#supplier_id').val('');
+                    $('#toggle_supplier').prop('checked', false);
                     submitBtn.html('<i class="fas fa-save me-1"></i> Record Expense');
                     isEditing = false;
                     editingExpenseId = null;
@@ -734,6 +891,8 @@
                         $('#voucher_number').val(expense.voucher_number);
                         $('#reference_note').val(expense.reference_note || '');
                         $('#bank_account_id').val(expense.bank_account_id || '');
+                        $('#toggle_supplier').prop('checked', !!expense.supplier_id).trigger('change');
+                        if (expense.supplier_id) $('#supplier_id').val(expense.supplier_id);
                         const storedDateTime = new Date(expense.date_time);
                         $('#date_time').val(storedDateTime.toISOString().slice(0, 16));
                         $(`input[name="payment_mode"][value="${expense.payment_mode}"]`).prop('checked', true).trigger('change');
@@ -828,6 +987,7 @@
                 <td>${expense.expense_type?.name || 'N/A'}</td>
                 <td data-amount="${expense.payment_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
+                <td>${expense.supplier?.name || 'N/A'}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${expense.narration || '-'}">
                         View Narration
@@ -874,6 +1034,7 @@
                 <td>${expense.expense_type?.name || 'N/A'}</td>
                 <td data-amount="${expense.payment_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
+                <td>${expense.supplier?.name || 'N/A'}</td>
                 <td>
                     <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${expense.narration || '-'}">
                         View Narration
