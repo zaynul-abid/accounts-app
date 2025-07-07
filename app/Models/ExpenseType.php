@@ -17,4 +17,6 @@ class ExpenseType extends Model
     {
         return $this->hasMany(Expense::class);
     }
+
+
 }

@@ -113,9 +113,17 @@
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a href="{{route('companies.index')}}" class="nav-link {{ request()->routeIs('expense-types.index') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-shopping-cart"></i>
+                        <p>Companies</p>
+                    </a>
+                </li>
 
 
-{{--                @php--}}
+
+
+                {{--                @php--}}
 {{--                    $productRoutes = ['products.index', 'categories.index', 'sizes.index', 'brands.index', 'colors.index'];--}}
 {{--                @endphp--}}
 

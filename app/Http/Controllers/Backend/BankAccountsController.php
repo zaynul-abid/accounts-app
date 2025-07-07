@@ -12,7 +12,9 @@ class BankAccountsController extends Controller
 {
     public function index()
     {
-        $bankAccounts = BankAccount::orderBy('created_at', 'desc')->paginate(10);
+        $bankAccounts = BankAccount::where('company_id', auth()->user()->company_id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         return view('backend.pages.banks.index', compact('bankAccounts'));
     }
 
@@ -28,7 +30,13 @@ class BankAccountsController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
-        $bankAccount = BankAccount::create($validated);
+        // Get company ID - assuming user belongs to a company
+        $companyId = auth()->user()->company_id; // or auth()->user()->company->id if using relationship
+
+        // Merge company_id with validated data
+        $data = array_merge($validated, ['company_id' => $companyId]);
+
+        $bankAccount = BankAccount::create($data);
 
         return response()->json([
             'success' => true,
@@ -41,7 +49,8 @@ class BankAccountsController extends Controller
                 'branch_name' => $bankAccount->branch_name,
                 'ifsc_code' => $bankAccount->ifsc_code,
                 'account_type' => $bankAccount->account_type,
-                'is_active' => $bankAccount->is_active
+                'is_active' => $bankAccount->is_active,
+                'company_id' => $bankAccount->company_id // include company_id in response if needed
             ]
         ]);
     }

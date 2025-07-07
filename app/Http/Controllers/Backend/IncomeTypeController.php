@@ -10,7 +10,11 @@ class IncomeTypeController extends Controller
 {
     public function index()
     {
-        $incomeTypes = IncomeType::orderBy('created_at', 'desc')->paginate(10);
+        // Get income types only for the current user's company
+        $incomeTypes = IncomeType::where('company_id', auth()->user()->company_id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('backend.pages.income-types.index', compact('incomeTypes'));
     }
 
@@ -23,7 +27,10 @@ class IncomeTypeController extends Controller
             'type' => 'required|in:Direct Income,Indirect Income',
         ]);
 
-        $incomeType = IncomeType::create($validated);
+        // Add company_id to the validated data
+        $data = array_merge($validated, ['company_id' => auth()->user()->company_id]);
+
+        $incomeType = IncomeType::create($data);
 
         return response()->json([
             'success' => true,
@@ -33,7 +40,8 @@ class IncomeTypeController extends Controller
                 'name' => $incomeType->name,
                 'description' => $incomeType->description,
                 'status' => $incomeType->status,
-                'type' => $incomeType->type
+                'type' => $incomeType->type,
+                'company_id' => $incomeType->company_id // Include company_id in response
             ]
         ]);
     }

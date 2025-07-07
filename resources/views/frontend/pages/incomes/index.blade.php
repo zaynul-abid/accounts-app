@@ -136,11 +136,32 @@
             font-size: 1.1rem;
             font-weight: 600;
         }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.4rem 1rem;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+            color: white;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h4 class="mb-4 text-2xl font-bold text-gray-800">Income Recording System</h4>
+    @if(auth()->user()->isEmployee())
+        <a href="{{ route('employee.dashboard') }}" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i> Back
+        </a>
+    @else
+        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i> Back
+        </a>
+    @endif
 
     <!-- Record New Income Card -->
     <div class="card mb-4">

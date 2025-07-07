@@ -9,65 +9,105 @@ use App\Models\ExpenseType;
 use App\Models\Supplier;
 use App\Models\SupplierTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ExpenseController extends Controller
 {
     public function index()
     {
+        $companyId = auth()->user()->company_id;
+
         $expenses = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
+            ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
-        $expenseTypes = ExpenseType::all();
-        $bankAccounts = BankAccount::where('is_active', 1)->get();
-        $suppliers = Supplier::where('status', 1)->get();
-        return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'));
+
+        $expenseTypes = ExpenseType::where('company_id', $companyId)->get();
+
+        $bankAccounts = BankAccount::where('company_id', $companyId)
+            ->where('is_active', 1)
+            ->get();
+
+        $suppliers = Supplier::where('company_id', $companyId)
+            ->where('status', 1)
+            ->get();
+
+        return view('frontend.pages.expenses.index',
+            compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'expense_type_id' => 'required|exists:expense_types,id',
-            'voucher_number' => 'required|string|max:255',
-            'reference_note' => 'nullable|string|max:255',
-            'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'date_time' => 'required|date',
-            'payment_mode' => 'required|in:cash,credit,bank',
-            'payment_amount' => 'required|numeric|min:0',
-            'narration' => 'nullable|string',
-        ]);
-
-        // Create expense
-        $expense = Expense::create($validated + ['created_by' => auth()->id()]);
-
-        // Create supplier transaction if supplier is selected
-        if ($validated['supplier_id']) {
-            $transactionType = ($validated['payment_mode'] === 'credit') ? 'purchase' : 'payment';
-            $amountField = ($validated['payment_mode'] === 'credit') ? 'credit' : 'debit';
-
-            SupplierTransaction::create([
-                'supplier_id' => $validated['supplier_id'],
-                'date' => $validated['date_time'],
-                'bill_number' => $validated['voucher_number'],
-                'transaction_mode' => $expense->expenseType->name,
-                'expense_id' => $expense->id,
-                'transaction_type' => $transactionType,
-                'debit' => $amountField === 'debit' ? $validated['payment_amount'] : 0,
-                'credit' => $amountField === 'credit' ? $validated['payment_amount'] : 0,
-                'notes' => $validated['narration'] ?? 'Expense transaction'
+        try {
+            // Validate the request data
+            $validated = $request->validate([
+                'expense_type_id' => 'required|exists:expense_types,id',
+                'voucher_number' => 'required|string|max:255',
+                'reference_note' => 'nullable|string|max:255',
+                'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
+                'supplier_id' => 'nullable|exists:suppliers,id',
+                'date_time' => 'required|date',
+                'payment_mode' => 'required|in:cash,credit,bank',
+                'payment_amount' => 'required|numeric|min:0',
+                'narration' => 'nullable|string',
             ]);
-        }
 
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Expense recorded successfully',
-                'expense' => $expense->load('expenseType', 'createdBy', 'bankAccount', 'supplier')
-            ]);
-        }
+            // Get the authenticated user and company ID
+            $user = auth()->user();
+            if (!$user->company_id) {
+                return $request->wantsJson() || $request->ajax()
+                    ? response()->json(['success' => false, 'message' => 'User is not associated with any company'], 403)
+                    : redirect()->back()->withErrors(['error' => 'User is not associated with any company']);
+            }
 
-        return redirect()->route('expenses.index')
-            ->with('success', 'Expense recorded successfully!');
+            // Start a database transaction
+            return DB::transaction(function () use ($request, $validated, $user) {
+                // Create expense
+                $expense = Expense::create(array_merge($validated, [
+                    'created_by' => $user->id,
+                    'company_id' => $user->company_id,
+                ]));
+
+                // Create supplier transaction if supplier_id is provided
+                if ($validated['supplier_id']) {
+                    $transactionType = $validated['payment_mode'] === 'credit' ? 'purchase' : 'payment';
+                    $amountField = $validated['payment_mode'] === 'credit' ? 'credit' : 'debit';
+
+                    SupplierTransaction::create([
+                        'company_id' => $user->company_id,
+                        'supplier_id' => $validated['supplier_id'],
+                        'date' => $validated['date_time'],
+                        'bill_number' => $validated['voucher_number'],
+                        'transaction_mode' => $expense->expenseType->name,
+                        'expense_id' => $expense->id,
+                        'transaction_type' => $transactionType,
+                        'debit' => $amountField === 'debit' ? $validated['payment_amount'] : 0,
+                        'credit' => $amountField === 'credit' ? $validated['payment_amount'] : 0,
+                        'notes' => $validated['narration'] ?? 'Expense transaction',
+                    ]);
+                }
+
+                // Return response based on request type
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Expense recorded successfully',
+                        'expense' => $expense->load('expenseType', 'createdBy', 'bankAccount', 'supplier'),
+                    ], 201);
+                }
+
+                return redirect()->route('expenses.index')
+                    ->with('success', 'Expense recorded successfully!');
+            });
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('Failed to record expense: ' . $e->getMessage());
+
+            // Return error response based on request type
+            return $request->wantsJson() || $request->ajax()
+                ? response()->json(['success' => false, 'message' => 'Failed to record expense: ' . $e->getMessage()], 500)
+                : redirect()->back()->withErrors(['error' => 'Failed to record expense']);
+        }
     }
 
     public function edit(Expense $expense)

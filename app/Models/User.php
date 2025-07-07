@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'usertype',
+        'company_id',
     ];
 
     /**
@@ -61,4 +62,9 @@ class User extends Authenticatable
     {
         return $this->usertype === 'employee';
     }
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
 }

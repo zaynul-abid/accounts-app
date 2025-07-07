@@ -19,4 +19,6 @@ class SupplierTransaction extends Model
     {
         return $this->belongsTo(Expense::class);
     }
+
+
 }

@@ -13,26 +13,33 @@ class IncomeExpenseSummaryController extends Controller
 {
     public function index()
     {
+        $companyId = auth()->user()->company_id;
+
         $expenses = Expense::with(['expenseType', 'createdBy'])
+            ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
 
         $incomes = Income::with(['incomeType', 'createdBy'])
+            ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
 
-        return view('frontend.pages.income-expense-summary.index', compact('expenses', 'incomes'));
+        return view('frontend.pages.income-expense-summary.index',
+            compact('expenses', 'incomes'));
     }
-
     public function getData(Request $request)
     {
         $type = $request->query('type', 'all');
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
+        $companyId = auth()->user()->company_id;
         // Build queries
-        $incomeQuery = Income::with(['incomeType', 'createdBy']);
-        $expenseQuery = Expense::with(['expenseType', 'createdBy']);
+        $incomeQuery = Income::with(['incomeType', 'createdBy'])
+            ->where('company_id', $companyId);
+        $expenseQuery = Expense::with(['expenseType', 'createdBy'])
+            ->where('company_id', $companyId);
 
         // Apply date filters only if both dates are provided
         if ($startDate && $endDate) {

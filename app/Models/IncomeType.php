@@ -17,4 +17,6 @@ class IncomeType extends Model
     {
         return $this->hasMany(Income::class);
     }
+
+
 }

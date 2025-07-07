@@ -12,12 +12,21 @@ class IncomeController extends Controller
 {
     public function index()
     {
+        $companyId = auth()->user()->company_id;
+
         $incomes = Income::with(['incomeType', 'createdBy', 'bankAccount'])
+            ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
-        $incomeTypes = IncomeType::all();
-        $bankAccounts = BankAccount::where('is_active', 1)->get();
-        return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'));
+
+        $incomeTypes = IncomeType::where('company_id', $companyId)->get();
+
+        $bankAccounts = BankAccount::where('company_id', $companyId)
+            ->where('is_active', 1)
+            ->get();
+
+        return view('frontend.pages.incomes.index',
+            compact('incomes', 'incomeTypes', 'bankAccounts'));
     }
 
     /**
@@ -36,7 +45,11 @@ class IncomeController extends Controller
             'narration' => 'nullable|string',
         ]);
 
-        $income = Income::create($validated + ['created_by' => auth()->id()]);
+        // Add company_id to the validated data
+        $income = Income::create($validated + [
+                'created_by' => auth()->id(),
+                'company_id' => auth()->user()->company_id
+            ]);
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

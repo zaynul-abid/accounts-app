@@ -15,6 +15,6 @@ class DashboardController extends Controller
     }
 
     public function employeeIndex(){
-        return ('test');
+        return view('frontend.pages.employee-dashboard.index');
     }
 }

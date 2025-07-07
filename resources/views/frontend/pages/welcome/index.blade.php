@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IncomeTracker - Financial Notes</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>IncomeTracker - Welcome</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -62,13 +63,13 @@
             transform: translateY(-2px);
         }
 
-        .notes-section {
+        .company-select-section {
             padding: 4rem 1rem;
             max-width: 800px;
             margin: 0 auto;
         }
 
-        .notes-section h2 {
+        .company-select-section h2 {
             font-size: 2rem;
             font-weight: 700;
             margin-bottom: 2rem;
@@ -76,25 +77,27 @@
             text-align: center;
         }
 
-        .notes-content {
+        .company-form {
             background-color: rgba(20, 20, 20, 0.7);
             padding: 2rem;
             border-left: 3px solid var(--neon-green);
         }
 
-        .notes-content p {
-            margin-bottom: 1.5rem;
-            position: relative;
-            padding-left: 1.5rem;
+        .form-control, .form-select {
+            background-color: var(--dark-matte);
+            color: var(--light-text);
+            border: 1px solid rgba(0, 255, 136, 0.3);
         }
 
-        .notes-content p::before {
-            content: "•";
-            color: var(--neon-green);
-            position: absolute;
-            left: 0;
-            font-size: 1.5rem;
-            line-height: 1;
+        .form-control:focus, .form-select:focus {
+            background-color: var(--dark-matte);
+            color: var(--light-text);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.25);
+        }
+
+        .invalid-feedback {
+            color: #ff4d4d;
         }
 
         .footer {
@@ -117,21 +120,31 @@
     <div class="container">
         <h1>INCOMETRACKER</h1>
         <p class="mb-4">Financial management system for tracking income and expenses</p>
-        <a href="{{route('login')}}" class="btn login-btn">
-            <i class="fas fa-sign-in-alt me-2"></i> Login
-        </a>
     </div>
 </header>
 
-<section class="notes-section">
+<section class="company-select-section">
     <div class="container">
-        <h2>NOTES</h2>
-        <div class="notes-content">
-            <p>Track all income sources including sales, services, and investments with detailed categorization for better financial analysis.</p>
-            <p>Monitor expenses across departments with automated alerts when budgets are nearing their limits.</p>
-            <p>Generate comprehensive reports that provide insights into financial trends and help with forecasting.</p>
-            <p>Set up custom notifications for important financial events and milestones.</p>
-            <p>Maintain audit trails for all financial transactions to ensure compliance and transparency.</p>
+        <h2>SELECT COMPANY</h2>
+        <div class="company-form">
+            <form id="companySelectForm" action="{{ route('welcome.redirect') }}" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label for="company_id" class="form-label">Choose a Company</label>
+                    <select name="company_id" id="company_id" class="form-select" required>
+                        <option value="">Select a company</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}">{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('company_id')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                </div>
+                <button type="submit" class="btn login-btn">
+                    <i class="fas fa-sign-in-alt me-2"></i> Login
+                </button>
+            </form>
         </div>
     </div>
 </section>
@@ -142,6 +155,28 @@
     </div>
 </footer>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    $(document).ready(function () {
+        console.log("✅ jQuery is loaded!");
+
+        $('#companySelectForm').on('submit', function (e) {
+            const companyId = $('#company_id').val();
+            if (!companyId) {
+                e.preventDefault();
+                $('#company_id').addClass('is-invalid');
+                $('#company_id').next('.invalid-feedback').text('Please select a company.');
+            }
+        });
+
+        $('#company_id').on('change', function () {
+            if ($(this).val()) {
+                $(this).removeClass('is-invalid');
+                $(this).next('.invalid-feedback').text('');
+            }
+        });
+    });
+</script>
 </body>
 </html>

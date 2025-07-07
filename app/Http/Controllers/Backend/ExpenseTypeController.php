@@ -10,7 +10,9 @@ class ExpenseTypeController extends Controller
 {
     public function index()
     {
-        $expenseTypes = ExpenseType::orderBy('created_at', 'desc')->paginate(10);
+        $expenseTypes = ExpenseType::where('company_id', auth()->user()->company_id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         return view('backend.pages.expense-types.index', compact('expenseTypes'));
     }
 
@@ -23,7 +25,12 @@ class ExpenseTypeController extends Controller
             'type' => 'required|in:Direct Expense,Indirect Expense',
         ]);
 
-       $expenseType = ExpenseType::create($validated);
+        $companyId = auth()->user()->company_id;
+
+        // Merge company_id with validated data
+        $data = array_merge($validated, ['company_id' => $companyId]);
+
+        $expenseType = ExpenseType::create($data);
 
         return response()->json([
             'success' => true,
@@ -34,7 +41,7 @@ class ExpenseTypeController extends Controller
                 'description' => $expenseType->description,
                 'status' => $expenseType->status,
                 'type' => $expenseType->type
-             ]
+            ]
         ]);
     }
 

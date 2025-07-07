@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Income Expense Summary</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('js/income-expense.js') }}"></script>
 </head>
@@ -35,8 +35,13 @@
         <span>to</span>
         <input type="date" id="end-date" class="border rounded px-3 py-2" placeholder="Select end date">
         <button id="apply-filter" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Apply Filter</button>
-        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Print</button>
-        <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Exit</button>
+{{--        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Print</button>--}}
+        @if(auth()->user()->isEmployee())
+            <a href="{{route('employee.dashboard')}}" class="inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Exit</a>
+        @else
+            <a href="{{route('admin.dashboard')}}" class="inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Exit</a>
+        @endif
+
     </div>
 </div>
 <!-- Dual Tables -->

@@ -42,4 +42,9 @@ class Expense extends Model
     {
         return $this->hasMany(SupplierTransaction::class);
     }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

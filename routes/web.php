@@ -2,13 +2,16 @@
 
 use App\Http\Controllers\Backend\ExpenseTypeController;
 use App\Http\Controllers\Backend\IncomeTypeController;
+use App\Http\Controllers\Backend\SupplierTransactionController;
 use App\Http\Controllers\Frontend\IncomeExpenseSummaryController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [\App\Http\Controllers\HomeController::class,'index']);
+Route::get('/', [HomeController::class,'index']);
+Route::post('/redirect', [HomeController::class, 'redirectToLogin'])->name('welcome.redirect');
 
 
 
@@ -16,11 +19,7 @@ Route::get('/', [\App\Http\Controllers\HomeController::class,'index']);
 Route::middleware(['auth', 'usertype:admin'])->group(function () {
     Route::get('/admin/dashboard',[DashboardController::class,'adminIndex'])->name('admin.dashboard');
     Route::resource('users', UserController::class);
-    Route::resource('income-types', IncomeTypeController::class)->except(['show', 'edit']);
-    Route::resource('expense-types', ExpenseTypeController::class)->except(['show', 'edit']);
-    Route::resource('opening-balances', \App\Http\Controllers\Backend\OpeningBalanceController::class)->except(['show', 'edit']);
-    Route::resource('bank-accounts', \App\Http\Controllers\Backend\BankAccountsController::class)->except(['show', 'edit']);
-    Route::resource('suppliers', \App\Http\Controllers\Backend\SupplierController::class)->except(['show', 'edit']);
+    Route::resource('companies', \App\Http\Controllers\Backend\CompaniesController::class);
 });
 
 
@@ -29,11 +28,18 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::resource('incomes', \App\Http\Controllers\Frontend\IncomeController::class);
     Route::resource('expenses', \App\Http\Controllers\Frontend\ExpenseController::class);
 
+    Route::resource('income-types', IncomeTypeController::class)->except(['show', 'edit']);
+    Route::resource('expense-types', ExpenseTypeController::class)->except(['show', 'edit']);
+    Route::resource('opening-balances', \App\Http\Controllers\Backend\OpeningBalanceController::class)->except(['show', 'edit']);
+    Route::resource('bank-accounts', \App\Http\Controllers\Backend\BankAccountsController::class)->except(['show', 'edit']);
+    Route::resource('suppliers', \App\Http\Controllers\Backend\SupplierController::class)->except(['show', 'edit']);
+
     Route::get('/income-expense/summary',[IncomeExpenseSummaryController::class,'Index'])->name('income-expense-summary');
     Route::get('/income-expense/summary/data', [IncomeExpenseSummaryController::class, 'getData'])->name('income-expense-summary.data');
 
-    Route::get('/suppliers/details', [\App\Http\Controllers\Backend\SupplierTransactionController::class, 'index'])->name('suppliers.details');
-    Route::get('/suppliers/{supplier}/transactions', [\App\Http\Controllers\Backend\SupplierTransactionController::class, 'transactions'])->name('suppliers.transactions');
+    Route::get('/suppliers/details', [SupplierTransactionController::class, 'index'])->name('suppliers.details');
+    Route::get('/suppliers/{supplier}/transactions', [SupplierTransactionController::class, 'transactions'])->name('suppliers.transactions');
+    Route::post('/suppliers/{supplier}/transactions', [SupplierTransactionController::class, 'storePayment'])->name('suppliers.transactions.store');
 
 
 });
