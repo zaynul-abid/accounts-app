@@ -3,180 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>IncomeTracker - Welcome</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Creative Solutions | Digital Reality</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        :root {
-            --pure-black: #000000;
-            --dark-matte: #0a0a0a;
-            --neon-green: #00ff88;
-            --soft-green: #00cc6a;
-            --light-text: #f0f0f0;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--pure-black);
-            color: var(--light-text);
+        .animate-fadeIn {
+            animation: fadeIn 1s ease-out forwards;
+        }
+        .accounting-bg {
+            background: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            position: relative;
+        }
+        .overlay {
+            background: rgba(0, 0, 0, 0.6);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.7;
         }
-
-        .header {
-            background-color: var(--dark-matte);
-            padding: 5rem 1rem;
-            text-align: center;
-            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-        }
-
-        .header h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            color: var(--neon-green);
-            margin-bottom: 1.5rem;
-        }
-
-        .header p {
-            font-size: 1.25rem;
-            max-width: 700px;
-            margin: 0 auto 2rem;
-            opacity: 0.9;
-        }
-
-        .login-btn {
-            background: var(--neon-green);
-            color: var(--pure-black);
-            border: none;
-            padding: 0.75rem 2.5rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 4px;
+        .btn-pulse {
             transition: all 0.3s ease;
         }
-
-        .login-btn:hover {
-            background: var(--soft-green);
-            transform: translateY(-2px);
-        }
-
-        .company-select-section {
-            padding: 4rem 1rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .company-select-section h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: var(--neon-green);
-            text-align: center;
-        }
-
-        .company-form {
-            background-color: rgba(20, 20, 20, 0.7);
-            padding: 2rem;
-            border-left: 3px solid var(--neon-green);
-        }
-
-        .form-control, .form-select {
-            background-color: var(--dark-matte);
-            color: var(--light-text);
-            border: 1px solid rgba(0, 255, 136, 0.3);
-        }
-
-        .form-control:focus, .form-select:focus {
-            background-color: var(--dark-matte);
-            color: var(--light-text);
-            border-color: var(--neon-green);
-            box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.25);
-        }
-
-        .invalid-feedback {
-            color: #ff4d4d;
-        }
-
-        .footer {
-            background-color: var(--dark-matte);
-            text-align: center;
-            padding: 2rem 1rem;
-            margin-top: auto;
-            border-top: 1px solid rgba(0, 255, 136, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.5rem;
-            }
+        .btn-pulse:hover {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+            transform: scale(1.05);
         }
     </style>
 </head>
-<body>
-<header class="header">
-    <div class="container">
-        <h1>INCOMETRACKER</h1>
-        <p class="mb-4">Financial management system for tracking income and expenses</p>
-    </div>
-</header>
+<body class="accounting-bg">
+<div class="overlay flex items-center justify-center min-h-screen">
+    <div class="text-center px-6 max-w-4xl mx-auto">
+        <!-- Main Heading -->
+        <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight animate-fadeIn">
+            Clarity in<br>
+            <span class="text-green-400"> Every Transaction</span>
+        </h1>
+        <p class="text-lg md:text-xl text-gray-200 mb-10 animate-fadeIn" style="animation-delay: 0.2s;">
+            Record, analyze, and succeed with our intuitive financial solutions.
+        </p>
 
-<section class="company-select-section">
-    <div class="container">
-        <h2>SELECT COMPANY</h2>
-        <div class="company-form">
-            <form id="companySelectForm" action="{{ route('welcome.redirect') }}" method="POST">
-                @csrf
-                <div class="mb-3">
-                    <label for="company_id" class="form-label">Choose a Company</label>
-                    <select name="company_id" id="company_id" class="form-select" required>
-                        <option value="">Select a company</option>
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}">{{ $company->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('company_id')
-                    <div class="invalid-feedback d-block">{{ $message }}</div>
-                    @enderror
-                </div>
-                <button type="submit" class="btn login-btn">
-                    <i class="fas fa-sign-in-alt me-2"></i> Login
-                </button>
-            </form>
+        <!-- Call to Action Button -->
+        <div class="mt-10 animate-fadeIn" style="animation-delay: 0.4s;">
+            <a href="{{route('login')}}"
+               class="inline-block px-12 py-4 bg-green-500 text-white rounded-lg
+                          font-semibold text-lg btn-pulse">
+               Welcome
+            </a>
+        </div>
+
+        <!-- Decorative Financial Icons -->
+        <div class="mt-12 flex justify-center space-x-6 animate-fadeIn" style="animation-delay: 0.6s;">
+            <svg class="w-8 h-8 text-green-400 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <svg class="w-8 h-8 text-green-400 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+            </svg>
+            <svg class="w-8 h-8 text-green-400 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
         </div>
     </div>
-</section>
-
-<footer class="footer">
-    <div class="container">
-        <p>© 2025 IncomeTracker. All rights reserved.</p>
-    </div>
-</footer>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    $(document).ready(function () {
-        console.log("✅ jQuery is loaded!");
-
-        $('#companySelectForm').on('submit', function (e) {
-            const companyId = $('#company_id').val();
-            if (!companyId) {
-                e.preventDefault();
-                $('#company_id').addClass('is-invalid');
-                $('#company_id').next('.invalid-feedback').text('Please select a company.');
-            }
-        });
-
-        $('#company_id').on('change', function () {
-            if ($(this).val()) {
-                $(this).removeClass('is-invalid');
-                $(this).next('.invalid-feedback').text('');
-            }
-        });
-    });
-</script>
+</div>
 </body>
 </html>

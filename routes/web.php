@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Backend\ExpenseTypeController;
 use App\Http\Controllers\Backend\IncomeTypeController;
 use App\Http\Controllers\Backend\SupplierTransactionController;
@@ -12,13 +13,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class,'index']);
 Route::post('/redirect', [HomeController::class, 'redirectToLogin'])->name('welcome.redirect');
+// routes/web.php
+Route::post('/ajax-authenticate', [AuthenticatedSessionController::class, 'ajaxAuthenticate']);
+
+
+Route::get('/get-companies', [AuthenticatedSessionController::class, 'getCompanies'])->name('get.companies');
+Route::post('/update-company', [AuthenticatedSessionController::class, 'updateCompany'])->name('update.company');
 
 
 
 
 Route::middleware(['auth', 'usertype:admin'])->group(function () {
     Route::get('/admin/dashboard',[DashboardController::class,'adminIndex'])->name('admin.dashboard');
-    Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class)->except(['show', 'edit']);
     Route::resource('companies', \App\Http\Controllers\Backend\CompaniesController::class);
 });
 

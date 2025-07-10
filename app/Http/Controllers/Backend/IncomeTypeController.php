@@ -73,3 +73,5 @@ class IncomeTypeController extends Controller
         return response()->json(['message' => 'Income Type deleted successfully']);
     }
 }
+
+

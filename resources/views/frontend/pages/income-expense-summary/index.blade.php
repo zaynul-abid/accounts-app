@@ -2,56 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Income Expense Summary</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('js/income-expense.js') }}"></script>
+    <style>
+        @media (max-width: 768px) {
+            .filter-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .filter-controls .buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        input::placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
+
 <!-- Header -->
-<div class="text-black text-center py-5 shadow-md">
-    <h1 class="text-2xl font-bold uppercase tracking-wide">Income Expense Summary Report</h1>
+<div class="text-black text-center py-4 shadow-md bg-white">
+    <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Income Expense Summary Report</h1>
 </div>
 
 <!-- Filter Section -->
-<div class="bg-white shadow-md rounded-md p-6 mt-6 max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    <div class="flex items-center gap-4">
-        <label class="inline-flex items-center">
-            <input type="radio" name="type" value="all" class="form-radio type-filter" checked>
-            <span class="ml-2">All</span>
-        </label>
-        <label class="inline-flex items-center">
-            <input type="radio" name="type" value="income" class="form-radio type-filter">
-            <span class="ml-2">Income</span>
-        </label>
-        <label class="inline-flex items-center">
-            <input type="radio" name="type" value="expense" class="form-radio type-filter">
-            <span class="ml-2">Expense</span>
-        </label>
-    </div>
-    <div class="flex items-center gap-2">
-        <input type="date" id="start-date" class="border rounded px-3 py-2" placeholder="Select start date">
-        <span>to</span>
-        <input type="date" id="end-date" class="border rounded px-3 py-2" placeholder="Select end date">
-        <button id="apply-filter" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Apply Filter</button>
-{{--        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Print</button>--}}
-        @if(auth()->user()->isEmployee())
-            <a href="{{route('employee.dashboard')}}" class="inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Exit</a>
-        @else
-            <a href="{{route('admin.dashboard')}}" class="inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Exit</a>
-        @endif
+<div class="bg-white shadow-md rounded-md p-4 md:p-6 mt-4 max-w-6xl mx-auto">
+    <div class="flex filter-container items-start justify-between gap-4 flex-wrap md:flex-nowrap">
+        <!-- Filter Options -->
+        <div class="flex flex-wrap gap-4">
+            <label class="inline-flex items-center">
+                <input type="radio" name="type" value="all" class="form-radio type-filter" checked>
+                <span class="ml-2 text-sm md:text-base">All</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="type" value="income" class="form-radio type-filter">
+                <span class="ml-2 text-sm md:text-base">Income</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="type" value="expense" class="form-radio type-filter">
+                <span class="ml-2 text-sm md:text-base">Expense</span>
+            </label>
+        </div>
 
+        <!-- Date Filters & Buttons -->
+        <div class="flex filter-controls flex-wrap md:flex-nowrap md:items-center md:justify-end w-full md:w-auto gap-4">
+            <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <input type="date" id="start-date" placeholder="Start Date"
+                       class="border rounded px-3 py-2 w-full text-sm placeholder-gray-400">
+                <input type="date" id="end-date" placeholder="End Date"
+                       class="border rounded px-3 py-2 w-full text-sm placeholder-gray-400">
+            </div>
+            <div class="flex buttons gap-2">
+                <button id="apply-filter"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm w-full md:w-auto">
+                    Apply Filter
+                </button>
+                <button id="clear-dates"
+                        class="bg-gray-100 text-gray-600 px-4 py-2 rounded hover:bg-gray-200 transition text-sm w-full md:w-auto">
+                    Clear
+                </button>
+                @if(auth()->user()->isEmployee())
+                    <a href="{{route('employee.dashboard')}}"
+                       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition text-sm w-full md:w-auto text-center">
+                        Exit
+                    </a>
+                @else
+                    <a href="{{route('admin.dashboard')}}"
+                       class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition text-sm w-full md:w-auto text-center">
+                        Exit
+                    </a>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
-<!-- Dual Tables -->
-<div class="max-w-6xl mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+<!-- Tables -->
+<div class="max-w-6xl mx-auto mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
     <!-- Income Table -->
     <div class="bg-white shadow-md rounded-md overflow-hidden">
         <div class="bg-green-100 px-4 py-2 font-semibold text-green-800">Income</div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100 text-gray-600 uppercase text-sm">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100 text-gray-600 uppercase">
                 <tr>
                     <th class="px-4 py-3 text-left">
                         <button class="sort-btn" data-type="income" data-column="date">Date</button>
@@ -79,8 +126,8 @@
     <div class="bg-white shadow-md rounded-md overflow-hidden">
         <div class="bg-red-100 px-4 py-2 font-semibold text-red-800">Expense</div>
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100 text-gray-600 uppercase text-sm">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-100 text-gray-600 uppercase">
                 <tr>
                     <th class="px-4 py-3 text-left">
                         <button class="sort-btn" data-type="expense" data-column="date">Date</button>
@@ -106,21 +153,23 @@
 </div>
 
 <!-- Summary Footer -->
-<div class="max-w-6xl mx-auto mt-6 mb-10 bg-white shadow-md rounded-md p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-    <div class="space-y-1">
+<div class="max-w-6xl mx-auto mt-4 mb-10 bg-white shadow-md rounded-md p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+    <div>
         <p><strong>Total Income:</strong> <span id="total-income" class="text-green-600">₹0</span></p>
         <p><strong>Total Expense:</strong> <span id="total-expense" class="text-red-600">₹0</span></p>
         <p><strong>Balance:</strong> <span id="balance">₹0</span></p>
     </div>
-    <div class="space-y-1">
+    <div>
         <p><strong>Opening Balance:</strong> <span id="opening-balance">₹0</span></p>
     </div>
-    <div class="space-y-1">
+    <div>
         <p><strong>Net Balance:</strong> <span id="net-balance" class="text-blue-600 font-semibold text-lg">₹0</span></p>
     </div>
 </div>
+
+<!-- Scripts -->
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         let sortConfig = {
             income: { column: 'date', order: 'desc' },
             expense: { column: 'date', order: 'desc' }
@@ -128,7 +177,6 @@
 
         function fetchData(applyDateFilter = false) {
             const type = $('input[name="type"]:checked').val();
-            // Only include date parameters if applyDateFilter is true
             const data = {
                 type: type,
                 income_sort_column: sortConfig.income.column,
@@ -146,12 +194,9 @@
                 url: '/income-expense/summary/data',
                 method: 'GET',
                 data: data,
-                success: function(response) {
-                    // Update tables
+                success: function (response) {
                     $('#income-table').html(response.incomes);
                     $('#expense-table').html(response.expenses);
-
-                    // Update summary
                     $('#total-income').text('₹' + response.total_income);
                     $('#total-expense').text('₹' + response.total_expense);
                     $('#balance').text('₹' + response.balance);
@@ -161,22 +206,24 @@
             });
         }
 
-        // Radio button filter
-        $('.type-filter').on('change', function() {
-            fetchData(false); // Don't apply date filter on type change
+        $('#apply-filter').on('click', function () {
+            fetchData(true);
         });
 
-        // Apply date filter only when the Filter button is clicked
-        $('#apply-filter').on('click', function() {
-            fetchData(true); // Apply date filter
+        $('#clear-dates').on('click', function () {
+            $('#start-date').val('');
+            $('#end-date').val('');
+            fetchData(false);
         });
 
-        // Sort buttons
-        $('.sort-btn').on('click', function() {
+        $('.type-filter').on('change', function () {
+            fetchData(false);
+        });
+
+        $('.sort-btn').on('click', function () {
             const type = $(this).data('type');
             const column = $(this).data('column');
 
-            // Toggle sort order
             if (sortConfig[type].column === column) {
                 sortConfig[type].order = sortConfig[type].order === 'desc' ? 'asc' : 'desc';
             } else {
@@ -184,13 +231,12 @@
                 sortConfig[type].order = 'desc';
             }
 
-            fetchData($('input[name="type"]:checked').val() !== 'all'); // Maintain date filter if already applied
+            fetchData(true);
         });
 
-        // Initial data load (show all data)
         fetchData(false);
     });
 </script>
 </body>
-
 </html>
+

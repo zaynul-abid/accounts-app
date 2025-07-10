@@ -11,20 +11,19 @@
         body {
             background-color: #f8f9fa;
             font-family: 'Inter', sans-serif;
-            padding: 1.5rem;
+            padding: 1rem;
         }
         .card {
             border: none;
             border-radius: 1rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
             background: #ffffff;
         }
         .card-header {
             background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
             color: white;
             border-bottom: none;
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             font-weight: 600;
             border-radius: 1rem 1rem 0 0;
         }
@@ -38,7 +37,7 @@
             content: " *";
             color: #dc3545;
         }
-        #supplierField {
+        #supplierField, #bankAccountField {
             display: none;
         }
         .table {
@@ -49,17 +48,17 @@
             background-color: #e9ecef;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #4b5563;
         }
         .table td {
             vertical-align: middle;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .badge {
             padding: 0.4em 0.7em;
             font-weight: 500;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .modal-content {
             border-radius: 1rem;
@@ -71,23 +70,23 @@
             overflow-y: auto;
         }
         .btn-sm {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
         }
         .narration-btn {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border-color: #17a2b8;
         }
         .form-control, .form-select {
             padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             height: 2.2rem;
             border-radius: 0.5rem;
             border: 1px solid #ced4da;
         }
         .input-group .btn {
             padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             border-radius: 0 0.5rem 0.5rem 0;
         }
         .form-check {
@@ -97,7 +96,7 @@
             margin-top: 0.2rem;
         }
         .card-body {
-            padding: 1.5rem;
+            padding: 1rem;
         }
         textarea.form-control {
             height: 4rem;
@@ -108,7 +107,7 @@
             color: white;
             border: none;
             padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             border-radius: 0.5rem;
             transition: background 0.3s ease;
         }
@@ -119,45 +118,151 @@
             background: #007bff;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
+            padding: 0.4rem 0.8rem;
         }
         .btn-primary:hover {
             background: #0056b3;
         }
         .btn-outline-secondary {
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
+            padding: 0.4rem 0.8rem;
         }
         .modal-header {
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
         .modal-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
         }
         .btn-secondary {
             background: #6c757d;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
-            font-size: 0.9rem;
-            transition: background 0.3s ease;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
         }
         .btn-secondary:hover {
             background: #5a6268;
             color: white;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .input-group-sm {
+            max-width: 200px;
+        }
+        .input-group-sm .form-control {
+            font-size: 0.8rem;
+            height: 1.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+        .input-group-sm .btn {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 767px) {
+            .input-group-sm {
+                max-width: 150px;
+            }
+            .input-group-sm .form-control {
+                font-size: 0.75rem;
+                height: 1.6rem;
+                padding: 0.2rem 0.5rem;
+            }
+            .input-group-sm .btn {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .input-group-sm {
+                max-width: 120px;
+            }
+        }
+        @media (max-width: 767px) {
+            .container {
+                padding: 0.5rem;
+            }
+            .card {
+                margin-bottom: 1rem;
+            }
+            .card-header {
+                padding: 0.5rem;
+            }
+            .card-body {
+                padding: 0.75rem;
+            }
+            .form-label {
+                font-size: 0.8rem;
+            }
+            .form-control, .form-select {
+                font-size: 0.8rem;
+                height: 2rem;
+            }
+            .btn-sm {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.75rem;
+            }
+            .table th, .table td {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .action-buttons .btn {
+                width: 100%;
+                text-align: center;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .input-group {
+                flex-wrap: nowrap;
+            }
+            .input-group .btn {
+                padding: 0.3rem 0.5rem;
+            }
+            .row.g-3 {
+                margin-left: -0.5rem;
+                margin-right: -0.5rem;
+            }
+            .row.g-3 > * {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .col-md-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            .btn-add {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+            }
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            .modal-content {
+                padding: 0.5rem;
+            }
+
         }
     </style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
 <div class="container">
-    <h4 class="mb-4 text-2xl font-bold text-gray-800">Expense Recording System</h4>
-   @if(auth()->user()->isEmployee())
-    <a href="{{ route('employee.dashboard') }}" class="btn btn-secondary mb-3">
-        <i class="fas fa-arrow-left me-2"></i> Back
-    </a>
+    <h4 class="mb-3 text-xl font-bold text-gray-800">Expense Recording System</h4>
+    @if(auth()->user()->isEmployee())
+        <a href="{{ route('employee.dashboard') }}" class="btn btn-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i> Back
+        </a>
     @else
         <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">
             <i class="fas fa-arrow-left me-2"></i> Back
@@ -165,7 +270,7 @@
     @endif
 
     <!-- Record New Expense Card -->
-    <div class="card mb-4">
+    <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Record New Expense</h6>
             <i class="fas fa-plus-circle"></i>
@@ -193,12 +298,13 @@
                         <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
                     </div>
                     <div class="col-md-4">
-                        <label for="date_time" class="form-label required-field">Date & Time</label>
-                        <input type="datetime-local" class="form-control" id="date_time" name="date_time" required>
+                        <label for="date" class="form-label required-field">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                        <input type="hidden" id="date_time" name="date_time">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label required-field">Payment Mode</label>
-                        <div class="d-flex gap-3">
+                        <div class="d-flex gap-3 flex-wrap">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="payment_mode" id="cash" value="cash" checked>
                                 <label class="form-check-label" for="cash">Cash</label>
@@ -212,52 +318,52 @@
                                 <label class="form-check-label" for="bank">Bank</label>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="reference_note" class="form-label">Reference Note</label>
-                        <input type="text" class="form-control" id="reference_note" name="reference_note">
+                        <div id="bankAccountField" class="mt-2">
+                            <label for="bank_account_id" class="form-label required-field">Bank Account</label>
+                            <div class="input-group">
+                                <select class="form-select" id="bank_account_id" name="bank_account_id">
+                                    <option value="">Select Bank Account</option>
+                                    @foreach($bankAccounts as $account)
+                                        <option value="{{ $account->id }}">{{ $account->account_name }} ({{ $account->account_number }})</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#bankAccountModal" data-action="create">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label for="payment_amount" class="form-label required-field">Amount</label>
                         <input type="number" step="0.01" class="form-control" id="payment_amount" name="payment_amount" required>
                     </div>
                     <div class="col-md-4">
+                        <label for="reference_note" class="form-label">Reference Note</label>
+                        <input type="text" class="form-control" id="reference_note" name="reference_note">
+                    </div>
+                    <div class="col-md-4">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="toggle_supplier" value="1">
                             <label class="form-check-label" for="toggle_supplier">Is Supplier Involved?</label>
                         </div>
-                    </div>
-                    <div class="col-md-4" id="supplierField">
-                        <label for="supplier_id" class="form-label required-field">Supplier</label>
-                        <div class="input-group">
-                            <select class="form-select" id="supplier_id" name="supplier_id">
-                                <option value="">Select Supplier</option>
-                                @foreach($suppliers as $supplier)
-                                    <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#supplierModal" data-action="create">
-                                <i class="fas fa-plus-circle"></i>
-                            </button>
+                        <div id="supplierField" class="mt-2">
+                            <label for="supplier_id" class="form-label required-field">Supplier</label>
+                            <div class="input-group">
+                                <select class="form-select" id="supplier_id" name="supplier_id">
+                                    <option value="">Select Supplier</option>
+                                    @foreach($suppliers as $supplier)
+                                        <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#supplierModal" data-action="create">
+                                    <i class="fas fa-plus-circle"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <label for="narration" class="form-label">Narration</label>
                         <textarea class="form-control" id="narration" name="narration" rows="3" placeholder="Enter any additional details..."></textarea>
-                    </div>
-                    <div class="col-md-4" id="bankAccountField">
-                        <label for="bank_account_id" class="form-label required-field">Bank Account</label>
-                        <div class="input-group">
-                            <select class="form-select" id="bank_account_id" name="bank_account_id">
-                                <option value="">Select Bank Account</option>
-                                @foreach($bankAccounts as $account)
-                                    <option value="{{ $account->id }}">{{ $account->account_name }} ({{ $account->account_number }})</option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#bankAccountModal" data-action="create">
-                                <i class="fas fa-plus-circle"></i>
-                            </button>
-                        </div>
                     </div>
                 </div>
                 <div class="d-flex justify-content-end mt-3 gap-2">
@@ -276,7 +382,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Expense Records</h6>
-            <div class="input-group w-25">
+            <div class="input-group input-group-sm w-25 w-md-15">
                 <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                 <button class="btn btn-outline-secondary" type="button" id="searchButton">
                     <i class="fas fa-search"></i>
@@ -288,13 +394,14 @@
                 Expense recorded successfully!
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="table-container">
+            <div class="table-responsive">
                 <table class="table table-hover" id="expenseTable">
                     <thead>
                     <tr>
                         <th scope="col">No</th>
                         <th scope="col">Voucher Number</th>
                         <th scope="col">Expense</th>
+                        <th scope="col">Reference Note</th>
                         <th scope="col">Amount</th>
                         <th scope="col">Payment Mode</th>
                         <th scope="col">Supplier</th>
@@ -310,6 +417,7 @@
                             <td>{{ $index + 1 + ($expenses->perPage() * ($expenses->currentPage() - 1)) }}</td>
                             <td>{{ $expense->voucher_number }}</td>
                             <td>{{ $expense->expenseType->name }}</td>
+                            <td>{{ $expense->reference_note ?? 'N/A' }}</td>
                             <td data-amount="{{ $expense->payment_amount }}">{{ number_format($expense->payment_amount, 2) }}</td>
                             <td>
                                 <span class="badge {{ $expense->payment_mode == 'cash' ? 'bg-success' : ($expense->payment_mode == 'bank' ? 'bg-primary' : 'bg-info') }}">{{ ucfirst($expense->payment_mode) }}</span>
@@ -321,8 +429,8 @@
                                 </button>
                             </td>
                             @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                                <td>
-                                    <button class="btn btn-sm btn-warning rounded-3 me-1">
+                                <td class="action-buttons">
+                                    <button class="btn btn-sm btn-warning rounded-3">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger rounded-3">
@@ -544,13 +652,26 @@
             $('#totalAmount').text(total.toFixed(2));
         }
 
-        // Set current date and time
+        // Set current date and hidden time
         function setCurrentDateTime() {
             const now = new Date();
+            const formattedDate = now.toISOString().slice(0, 10);
             const formattedDateTime = now.toISOString().slice(0, 16);
+            $('#date').val(formattedDate);
             $('#date_time').val(formattedDateTime);
         }
         setCurrentDateTime();
+
+        // Update hidden date_time when date changes
+        $('#date').on('change', function() {
+            const date = $(this).val();
+            if (date) {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                $('#date_time').val(`${date}T${hours}:${minutes}`);
+            }
+        });
 
         // Show/hide fields based on payment mode
         function updatePaymentModeFields() {
@@ -915,6 +1036,7 @@
                         $('#toggle_supplier').prop('checked', !!expense.supplier_id).trigger('change');
                         if (expense.supplier_id) $('#supplier_id').val(expense.supplier_id);
                         const storedDateTime = new Date(expense.date_time);
+                        $('#date').val(storedDateTime.toISOString().slice(0, 10));
                         $('#date_time').val(storedDateTime.toISOString().slice(0, 16));
                         $(`input[name="payment_mode"][value="${expense.payment_mode}"]`).prop('checked', true).trigger('change');
                         $('#payment_amount').val(expense.payment_amount);
@@ -991,11 +1113,8 @@
             const formattedDate = date.toLocaleDateString('en-US', {
                 day: '2-digit',
                 month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).replace(',', '');
+                year: 'numeric'
+            });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
             const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' : (expense.payment_mode === 'bank' ? 'bg-primary' : 'bg-info');
             const formattedMode = expense.payment_mode.charAt(0).toUpperCase() + expense.payment_mode.slice(1);
@@ -1006,6 +1125,7 @@
                 <td>${rowCount}</td>
                 <td>${expense.voucher_number}</td>
                 <td>${expense.expense_type?.name || 'N/A'}</td>
+                <td>${expense.reference_note || 'N/A'}</td>
                 <td data-amount="${expense.payment_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
                 <td>${expense.supplier?.name || 'N/A'}</td>
@@ -1015,8 +1135,8 @@
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-            <td>
-                <button class="btn btn-sm btn-warning rounded-3 me-1">
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-warning rounded-3">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-sm btn-danger rounded-3">
@@ -1038,11 +1158,8 @@
             const formattedDate = date.toLocaleDateString('en-US', {
                 day: '2-digit',
                 month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).replace(',', '');
+                year: 'numeric'
+            });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
             const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' : (expense.payment_mode === 'bank' ? 'bg-primary' : 'bg-info');
             const formattedMode = expense.payment_mode.charAt(0).toUpperCase() + expense.payment_mode.slice(1);
@@ -1053,6 +1170,7 @@
                 <td></td>
                 <td>${expense.voucher_number}</td>
                 <td>${expense.expense_type?.name || 'N/A'}</td>
+                <td>${expense.reference_note || 'N/A'}</td>
                 <td data-amount="${expense.payment_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
                 <td>${expense.supplier?.name || 'N/A'}</td>
@@ -1062,8 +1180,8 @@
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                <td>
-                    <button class="btn btn-sm btn-warning rounded-3 me-1">
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-warning rounded-3">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm btn-danger rounded-3">

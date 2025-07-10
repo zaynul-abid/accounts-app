@@ -11,7 +11,7 @@
         body {
             background-color: #f8f9fa;
             font-family: 'Inter', sans-serif;
-            padding: 1.5rem;
+            padding: 1rem;
         }
         .card {
             border: none;
@@ -24,7 +24,7 @@
             background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
             color: white;
             border-bottom: none;
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             font-weight: 600;
             border-radius: 1rem 1rem 0 0;
         }
@@ -49,17 +49,17 @@
             background-color: #e9ecef;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #4b5563;
         }
         .table td {
             vertical-align: middle;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .badge {
-            padding: 0.4em 0.7em;
+            padding: 0.35em 0.65em;
             font-weight: 500;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .modal-content {
             border-radius: 1rem;
@@ -71,44 +71,44 @@
             overflow-y: auto;
         }
         .btn-sm {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.85rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
         }
         .narration-btn {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border-color: #17a2b8;
         }
         .form-control, .form-select {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
-            height: 2.2rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+            height: 2rem;
             border-radius: 0.5rem;
             border: 1px solid #ced4da;
         }
         .input-group .btn {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
             border-radius: 0 0.5rem 0.5rem 0;
         }
         .form-check {
-            margin-bottom: 0.4rem;
+            margin-bottom: 0.35rem;
         }
         .form-check-input {
             margin-top: 0.2rem;
         }
         .card-body {
-            padding: 1.5rem;
+            padding: 1rem;
         }
         textarea.form-control {
-            height: 4rem;
+            height: 3.5rem;
             resize: none;
         }
         .btn-add {
             background: #28a745;
             color: white;
             border: none;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
             border-radius: 0.5rem;
             transition: background 0.3s ease;
         }
@@ -119,52 +119,164 @@
             background: #007bff;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
+            padding: 0.35rem 0.9rem;
         }
         .btn-primary:hover {
             background: #0056b3;
         }
         .btn-outline-secondary {
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
+            padding: 0.35rem 0.9rem;
         }
         .modal-header {
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
         .modal-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
         }
         .btn-secondary {
             background: #6c757d;
             border: none;
             border-radius: 0.5rem;
-            padding: 0.4rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.85rem;
             transition: background 0.3s ease;
         }
         .btn-secondary:hover {
             background: #5a6268;
             color: white;
         }
+        .action-buttons {
+            display: flex;
+            gap: 0.3rem;
+            justify-content: center;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .search-input-group {
+            width: 15% !important;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            .card-header {
+                padding: 0.5rem;
+            }
+            .card-body {
+                padding: 0.75rem;
+            }
+            .form-control, .form-select {
+                font-size: 0.8rem;
+                height: 1.8rem;
+            }
+            .btn-sm {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.75rem;
+            }
+            .table th, .table td {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+            .table-container {
+                max-height: 300px;
+            }
+            .input-group .btn {
+                padding: 0.3rem 0.6rem;
+            }
+            .row.g-3 {
+                gap: 0.5rem !important;
+            }
+            .action-buttons {
+                flex-direction: row;
+                gap: 0.2rem;
+            }
+            .action-buttons .btn {
+                padding: 0.15rem 0.3rem;
+                font-size: 0.7rem;
+            }
+            .search-input-group {
+                width: 25% !important;
+            }
+            .input-group .form-control {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .input-group .btn {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.75rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .container {
+                padding: 0.25rem;
+            }
+            .card-header h6 {
+                font-size: 0.9rem;
+            }
+            .form-label {
+                font-size: 0.75rem;
+            }
+            .btn-add, .btn-primary, .btn-secondary {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.75rem;
+            }
+            .input-group .btn {
+                padding: 0.25rem 0.5rem;
+            }
+            .table th, .table td {
+                font-size: 0.7rem;
+                padding: 0.4rem;
+            }
+            .badge {
+                font-size: 0.7rem;
+            }
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            .action-buttons {
+                flex-direction: row;
+                gap: 0.15rem;
+            }
+            .action-buttons .btn {
+                padding: 0.1rem 0.25rem;
+                font-size: 0.65rem;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .search-input-group {
+                width: 35% !important;
+            }
+            .input-group .form-control {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.5rem;
+            }
+            .input-group .btn {
+                padding: 0.25rem 0.4rem;
+                font-size: 0.7rem;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h4 class="mb-4 text-2xl font-bold text-gray-800">Income Recording System</h4>
+    <h4 class="mb-3 text-xl font-bold text-gray-800">Income Recording System</h4>
     @if(auth()->user()->isEmployee())
-        <a href="{{ route('employee.dashboard') }}" class="btn btn-secondary mb-3">
+        <a href="{{ route('employee.dashboard') }}" class="btn btn-secondary mb-2">
             <i class="fas fa-arrow-left me-2"></i> Back
         </a>
     @else
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-3">
+        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary mb-2">
             <i class="fas fa-arrow-left me-2"></i> Back
         </a>
     @endif
 
     <!-- Record New Income Card -->
-    <div class="card mb-4">
+    <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Record New Income</h6>
             <i class="fas fa-plus-circle"></i>
@@ -173,11 +285,11 @@
             <form id="incomeForm" method="POST" action="#">
                 @csrf
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label for="voucher_number" class="form-label required-field">Voucher Number</label>
                         <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label for="income_type_id" class="form-label required-field">Income Type</label>
                         <div class="input-group">
                             <select class="form-select" id="income_type_id" name="income_type_id" required>
@@ -191,13 +303,13 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <label for="date_time" class="form-label required-field">Date & Time</label>
-                        <input type="datetime-local" class="form-control" id="date_time" name="date_time" required>
+                    <div class="col-12 col-md-4">
+                        <label for="date_time" class="form-label required-field">Date</label>
+                        <input type="date" class="form-control" id="date_time" name="date_time" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label class="form-label required-field">Receipt Mode</label>
-                        <div class="d-flex gap-3">
+                        <div class="d-flex gap-2 flex-wrap">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="receipt_mode" id="cash" value="cash" checked>
                                 <label class="form-check-label" for="cash">Cash</label>
@@ -212,15 +324,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <label for="reference_note" class="form-label">Reference Note</label>
-                        <input type="text" class="form-control" id="reference_note" name="reference_note">
-                    </div>
-                    <div class="col-md-4">
+                    <div class="col-12 col-md-4">
                         <label for="receipt_amount" class="form-label required-field">Amount</label>
                         <input type="number" step="0.01" class="form-control" id="receipt_amount" name="receipt_amount" required>
                     </div>
-                    <div class="col-md-6" id="bankAccountField">
+                    <div class="col-12 col-md-4">
+                        <label for="reference_note" class="form-label">Reference Note</label>
+                        <input type="text" class="form-control" id="reference_note" name="reference_note">
+                    </div>
+                    <div class="col-12 col-md-6" id="bankAccountField">
                         <label for="bank_account_id" class="form-label required-field">Bank Account</label>
                         <div class="input-group">
                             <select class="form-select" id="bank_account_id" name="bank_account_id">
@@ -234,12 +346,12 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-12 col-md-6">
                         <label for="narration" class="form-label">Narration</label>
                         <textarea class="form-control" id="narration" name="narration" rows="3" placeholder="Enter any additional details..."></textarea>
                     </div>
                 </div>
-                <div class="d-flex justify-content-end mt-3 gap-2">
+                <div class="d-flex justify-content-end mt-2 gap-2">
                     <button type="reset" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-undo me-1"></i> Clear
                     </button>
@@ -255,7 +367,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Income Records</h6>
-            <div class="input-group w-25">
+            <div class="input-group search-input-group">
                 <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                 <button class="btn btn-outline-secondary" type="button" id="searchButton">
                     <i class="fas fa-search"></i>
@@ -267,7 +379,7 @@
                 Income recorded successfully!
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="table-container">
+            <div class="table-container table-responsive">
                 <table class="table table-hover" id="incomeTable">
                     <thead>
                     <tr>
@@ -298,8 +410,8 @@
                                 </button>
                             </td>
                             @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                                <td>
-                                    <button class="btn btn-sm btn-warning rounded-3 me-1">
+                                <td class="action-buttons">
+                                    <button class="btn btn-sm btn-warning rounded-3">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-sm btn-danger rounded-3">
@@ -312,10 +424,10 @@
                     </tbody>
                 </table>
             </div>
-            <div class="mt-3 fw-semibold">
+            <div class="mt-2 fw-semibold">
                 Total Amount: <span id="totalAmount">0.00</span>
             </div>
-            <nav class="mt-3" aria-label="Page navigation">
+            <nav class="mt-2" aria-label="Page navigation">
                 {{ $incomes->links() }}
             </nav>
         </div>
@@ -470,11 +582,11 @@
             $('#totalAmount').text(total.toFixed(2));
         }
 
-        // Set current date and time
+        // Set current date
         function setCurrentDateTime() {
             const now = new Date();
-            const formattedDateTime = now.toISOString().slice(0, 16);
-            $('#date_time').val(formattedDateTime);
+            const formattedDate = now.toISOString().slice(0, 10);
+            $('#date_time').val(formattedDate);
         }
         setCurrentDateTime();
 
@@ -755,8 +867,8 @@
                         $('#voucher_number').val(income.voucher_number);
                         $('#reference_note').val(income.reference_note || '');
                         $('#bank_account_id').val(income.bank_account_id || '');
-                        const storedDateTime = new Date(income.date_time);
-                        $('#date_time').val(storedDateTime.toISOString().slice(0, 16));
+                        const storedDate = new Date(income.date_time).toISOString().slice(0, 10);
+                        $('#date_time').val(storedDate);
                         $(`input[name="receipt_mode"][value="${income.receipt_mode}"]`).prop('checked', true).trigger('change');
                         $('#receipt_amount').val(income.receipt_amount);
                         $('#narration').val(income.narration || '');
@@ -828,15 +940,6 @@
 
         // Add new income to table
         function addIncomeToTable(income) {
-            const date = new Date(income.date_time);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).replace(',', '');
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
             const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' : (income.receipt_mode === 'bank' ? 'bg-primary' : 'bg-info');
             const formattedMode = income.receipt_mode.charAt(0).toUpperCase() + income.receipt_mode.slice(1);
@@ -855,8 +958,8 @@
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-            <td>
-                <button class="btn btn-sm btn-warning rounded-3 me-1">
+            <td class="action-buttons">
+                <button class="btn btn-sm btn-warning rounded-3">
                     <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn btn-sm btn-danger rounded-3">
@@ -874,15 +977,6 @@
 
         // Update income in table
         function updateIncomeInTable(income) {
-            const date = new Date(income.date_time);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).replace(',', '');
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
             const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' : (income.receipt_mode === 'bank' ? 'bg-primary' : 'bg-info');
             const formattedMode = income.receipt_mode.charAt(0).toUpperCase() + income.receipt_mode.slice(1);
@@ -901,8 +995,8 @@
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                <td>
-                    <button class="btn btn-sm btn-warning rounded-3 me-1">
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-warning rounded-3">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn btn-sm btn-danger rounded-3">
