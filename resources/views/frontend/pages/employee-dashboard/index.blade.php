@@ -72,7 +72,8 @@
                     </div>
                     <div class="mb-3">
                         <p class="text-xs text-gray-500">Company</p>
-                        <p class="text-sm text-gray-700">Infotech</p>
+                        <p class="text-sm text-gray-700">{{ auth()->user()->company->name }}
+                        </p>
                     </div>
 
                 </div>

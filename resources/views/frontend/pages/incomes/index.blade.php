@@ -158,6 +158,18 @@
         .search-input-group {
             width: 15% !important;
         }
+        .btn-narration-mobile {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s ease;
+        }
+        .btn-narration-mobile:hover {
+            background: #138496;
+        }
         @media (max-width: 768px) {
             body {
                 padding: 0.5rem;
@@ -240,7 +252,7 @@
                 flex-direction: row;
                 gap: 0.15rem;
             }
-            .action-buttons .btn {
+            .action-buttons .btn, .action-buttons .btn-narration-mobile {
                 padding: 0.1rem 0.25rem;
                 font-size: 0.65rem;
             }
@@ -258,6 +270,10 @@
             .input-group .btn {
                 padding: 0.25rem 0.4rem;
                 font-size: 0.7rem;
+            }
+            /* Hide narration column header and cells in mobile view */
+            .narration-column {
+                display: none;
             }
         }
     </style>
@@ -384,11 +400,11 @@
                     <thead>
                     <tr>
                         <th scope="col">No</th>
-                        <th scope="col">Voucher Number</th>
+                        <th scope="col">V-Number</th>
                         <th scope="col">Income</th>
                         <th scope="col">Amount</th>
                         <th scope="col">Receipt Mode</th>
-                        <th scope="col">Narration</th>
+                        <th scope="col" class="narration-column">Narration</th>
                         @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                             <th scope="col">Actions</th>
                         @endif
@@ -404,13 +420,16 @@
                             <td>
                                 <span class="badge {{ $income->receipt_mode == 'cash' ? 'bg-success' : ($income->receipt_mode == 'bank' ? 'bg-primary' : 'bg-info') }}">{{ ucfirst($income->receipt_mode) }}</span>
                             </td>
-                            <td>
+                            <td class="narration-column">
                                 <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
                                     View Narration
                                 </button>
                             </td>
                             @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                                 <td class="action-buttons">
+                                    <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
                                     <button class="btn btn-sm btn-warning rounded-3">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -952,21 +971,24 @@
                 <td>${income.income_type?.name || 'N/A'}</td>
                 <td data-amount="${income.receipt_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
-                <td>
+                <td class="narration-column">
                     <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
                         View Narration
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
             <td class="action-buttons">
-                <button class="btn btn-sm btn-warning rounded-3">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger rounded-3">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-@endif
+                <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
+                        <i class="fas fa-comment"></i>
+                    </button>
+                    <button class="btn btn-sm btn-warning rounded-3">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger rounded-3">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+                @endif
             </tr>
             `;
             $('#incomeTable tbody').prepend(newRow);
@@ -989,13 +1011,16 @@
                 <td>${income.income_type?.name || 'N/A'}</td>
                 <td data-amount="${income.receipt_amount}">${formattedAmount}</td>
                 <td><span class="badge ${badgeClass}">${formattedMode}</span></td>
-                <td>
+                <td class="narration-column">
                     <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
                         View Narration
                     </button>
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                 <td class="action-buttons">
+                    <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
+                        <i class="fas fa-comment"></i>
+                    </button>
                     <button class="btn btn-sm btn-warning rounded-3">
                         <i class="fas fa-edit"></i>
                     </button>
