@@ -68,10 +68,18 @@
                 </li>
 
                 <li class="nav-item">
+                    <a href="{{ route('suppliers.reports') }}"
+                       class="nav-link {{ request()->routeIs('suppliers.reports') ? 'active' : '' }}">
+                        <i class="nav-icon 	fas fa-user-tie text-orange"></i>
+                        <p>Suppliers</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a href="{{ route('suppliers.details') }}"
                        class="nav-link {{ request()->routeIs('suppliers.details') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-clipboard-list text-warning"></i>
-                        <p>Supplier Reports</p>
+                        <p>Supplier Summary</p>
                     </a>
                 </li>
 
@@ -145,6 +153,8 @@
                         <p>Suppliers</p>
                     </a>
                 </li>
+
+
 
 
 

@@ -17,6 +17,14 @@ class SupplierTransactionController extends Controller
         return view('frontend.pages.suppliers.index', compact('suppliers')); // Corrected to use details.blade.php
     }
 
+    public function report()
+    {
+        $suppliers = Supplier::where('company_id', auth()->user()->company_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('frontend.pages.suppliers.report', compact('suppliers')); // Corrected to use details.blade.php
+    }
+
     public function transactions(Supplier $supplier, Request $request)
     {
         $query = SupplierTransaction::where('supplier_id', $supplier->id)

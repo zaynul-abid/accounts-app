@@ -14,7 +14,7 @@
             animation: fadeIn 1s ease-out forwards;
         }
         .accounting-bg {
-            background: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background: url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
             background-size: cover;
             position: relative;
         }
@@ -36,7 +36,7 @@
     <div class="text-center px-6 max-w-4xl mx-auto">
         <!-- Main Heading -->
         <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight animate-fadeIn">
-            Clarity in<br>
+            Record<br>
             <span class="text-green-400"> Every Transaction</span>
         </h1>
         <p class="text-lg md:text-xl text-gray-200 mb-10 animate-fadeIn" style="animation-delay: 0.2s;">
@@ -48,7 +48,7 @@
             <a href="{{route('login')}}"
                class="inline-block px-12 py-4 bg-green-500 text-white rounded-lg
                           font-semibold text-lg btn-pulse">
-               Welcome
+                Welcome
             </a>
         </div>
 

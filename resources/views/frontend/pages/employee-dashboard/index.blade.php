@@ -133,8 +133,17 @@
                         <div class="bg-amber-100 p-4 rounded-full text-amber-600 mb-4">
                             <i class="fas fa-user-tie text-2xl"></i>
                         </div>
+                        <h3 class="font-semibold text-gray-800 mb-2">Suppliers Summary</h3>
+                        <p class="text-gray-500 text-sm">Manage supplier </p>
+                    </a>
+
+
+                    <a href="{{route('suppliers.reports')}}" class="grid-button bg-white rounded-xl p-6 text-center flex flex-col items-center border border-gray-200 hover:border-indigo-300">
+                        <div class="bg-amber-100 p-4 rounded-full text-amber-600 mb-4">
+                            <i class="fas fa-industry text-2xl"></i>
+                        </div>
                         <h3 class="font-semibold text-gray-800 mb-2">Suppliers Details</h3>
-                        <p class="text-gray-500 text-sm">Manage supplier information</p>
+                        <p class="text-gray-500 text-sm">View supplier information</p>
                     </a>
                 </div>
             </div>
