@@ -120,13 +120,13 @@
                     </a>
 
                     <!-- Income-Expense Summary -->
-                    <a href="{{route('income-expense-summary')}}" class="grid-button bg-white rounded-xl p-6 text-center flex flex-col items-center border border-gray-200 hover:border-indigo-300">
-                        <div class="bg-blue-100 p-4 rounded-full text-blue-600 mb-4">
-                            <i class="fas fa-chart-line text-2xl"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-800 mb-2">Income-Expense Summary</h3>
-                        <p class="text-gray-500 text-sm">View financial summaries</p>
-                    </a>
+{{--                    <a href="{{route('income-expense-summary')}}" class="grid-button bg-white rounded-xl p-6 text-center flex flex-col items-center border border-gray-200 hover:border-indigo-300">--}}
+{{--                        <div class="bg-blue-100 p-4 rounded-full text-blue-600 mb-4">--}}
+{{--                            <i class="fas fa-chart-line text-2xl"></i>--}}
+{{--                        </div>--}}
+{{--                        <h3 class="font-semibold text-gray-800 mb-2">Income-Expense Summary</h3>--}}
+{{--                        <p class="text-gray-500 text-sm">View financial summaries</p>--}}
+{{--                    </a>--}}
 
                     <!-- Suppliers Details -->
                     <a href="{{route('suppliers.details')}}" class="grid-button bg-white rounded-xl p-6 text-center flex flex-col items-center border border-gray-200 hover:border-indigo-300">

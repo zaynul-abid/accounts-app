@@ -13,7 +13,6 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('company')
-            ->where('company_id', auth()->user()->company_id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         $companies = Company::orderBy('name')->get(['id', 'name']);

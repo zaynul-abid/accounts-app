@@ -223,11 +223,7 @@
                             showConfirmButton: false
                         }).then(() => {
                             $('#supplierModal').modal('hide');
-                            if (isEdit) {
-                                updateSupplierInTable(response.supplier);
-                            } else {
-                                location.reload(); // For create, reload to update table
-                            }
+                            location.reload(); // Refresh the page after create or edit
                         });
                     },
                     error: function (xhr) {
@@ -258,54 +254,6 @@
                 });
             });
 
-            // Function to update supplier in the table
-            function updateSupplierInTable(supplier) {
-                const row = $(`tr[data-supplier-id="${supplier.id}"]`);
-                row.html(`
-                    <td>${row.find('td:first').text()}</td>
-                    <td>${supplier.name}</td>
-                    <td>${supplier.contact_number}</td>
-                    <td>${supplier.address || 'N/A'}</td>
-                    <td>${number_format(supplier.opening_balance, 2)}</td>
-                    <td style="color: ${supplier.status ? 'green' : 'red'}">
-                        ${supplier.status ? 'Active' : 'Inactive'}
-                    </td>
-                    <td>
-                        <div class="d-flex flex-nowrap align-items-center">
-                            <button class="btn btn-sm btn-warning mr-1 edit-supplier"
-                                    data-toggle="modal"
-                                    data-target="#supplierModal"
-                                    data-action="edit"
-                                    data-id="${supplier.id}"
-                                    data-name="${supplier.name}"
-                                    data-contact-number="${supplier.contact_number}"
-                                    data-address="${supplier.address}"
-                                    data-opening-balance="${supplier.opening_balance}"
-                                    data-status="${supplier.status ? 1 : 0}">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-supplier"
-                                    data-id="${supplier.id}"
-                                    data-name="${supplier.name}">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                `);
-            }
-
-            // Helper function to format numbers
-            function number_format(number, decimals) {
-                return parseFloat(number).toFixed(decimals);
-            }
-
-            // Clear form when modal is closed
-            $('#supplierModal').on('hidden.bs.modal', function () {
-                $('#supplierForm')[0].reset();
-                $('#formError').addClass('d-none').text('');
-                $('.is-invalid').removeClass('is-invalid');
-            });
-
             // Delete supplier handler with confirmation
             $(document).on('click', '.delete-supplier', function() {
                 const supplierId = $(this).data('id');
@@ -332,8 +280,9 @@
                                     'Deleted!',
                                     response.message,
                                     'success'
-                                );
-                                $(`tr[data-supplier-id="${supplierId}"]`).remove();
+                                ).then(() => {
+                                    location.reload(); // Refresh the page after delete
+                                });
                             },
                             error: function(xhr) {
                                 Swal.fire(
@@ -345,6 +294,13 @@
                         });
                     }
                 });
+            });
+
+            // Clear form when modal is closed
+            $('#supplierModal').on('hidden.bs.modal', function () {
+                $('#supplierForm')[0].reset();
+                $('#formError').addClass('d-none').text('');
+                $('.is-invalid').removeClass('is-invalid');
             });
         });
     </script>

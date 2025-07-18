@@ -40,7 +40,7 @@
                                     </thead>
                                     <tbody>
                                     @forelse($openingBalances as $index => $openingBalance)
-                                        <tr>
+                                        <tr data-opening-id="{{ $openingBalance->id }}">
                                             <td>{{ $openingBalances->firstItem() + $index }}.</td>
                                             <td>{{ number_format($openingBalance->opening_balance, 2) }}</td>
                                             <td>{{ $openingBalance->description ?? 'N/A' }}</td>
@@ -56,7 +56,7 @@
                                                             data-action="edit"
                                                             data-id="{{ $openingBalance->id }}"
                                                             data-opening-balance="{{ $openingBalance->opening_balance }}"
-                                                            data-description="{{ $openingBalance->description }}"
+                                                            data-description="{{ $openingBalance->description ?? '' }}"
                                                             data-status="{{ $openingBalance->status }}">
                                                         Edit
                                                     </button>
@@ -153,92 +153,109 @@
         $(document).ready(function () {
             console.log("✅ JS is working and jQuery is ready!");
 
-            // Handle modal show event (for both create and edit)
+            // Handle modal show event (for create only)
             $('#openingBalanceModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const action = button.data('action');
 
-                $('#openingBalanceForm')[0].reset();
-                $('#formError').addClass('d-none').text('');
-                $('.is-invalid').removeClass('is-invalid');
-
-                if (action === 'edit') {
-                    $('#modalTitle').text('Edit Opening Balance');
-                    $('#formMethod').val('PUT');
-
-                    const openingBalanceId = button.data('id');
-                    $('#openingBalanceId').val(openingBalanceId);
-                    $('#openingBalanceField').val(button.data('opening-balance'));
-                    $('#descriptionField').val(button.data('description'));
-                    $('#statusField').val(button.data('status'));
-
-                    // If status is inactive (0), clear the selection
-                    if (button.data('status') == 0) {
-                        $('#statusField').val('');
-                    }
-                } else {
-                    $('#modalTitle').text('Add New Opening Balance');
+                if (action === 'create') {
+                    $('#openingBalanceForm')[0].reset();
                     $('#formMethod').val('POST');
                     $('#openingBalanceId').val('');
+                    $('#modalTitle').text('Add New Opening Balance');
+                    $('#formError').addClass('d-none').text('');
+                    $('.is-invalid').removeClass('is-invalid');
                 }
             });
 
-            // Handle form submission
+            // Handle edit opening balance button click
+            $(document).on('click', '.edit-opening-balance', function () {
+                const openingBalanceId = $(this).data('id');
+                const openingBalance = $(this).data('opening-balance');
+                const description = $(this).data('description') || '';
+                const status = $(this).data('status');
+
+                console.log('Edit clicked - Opening Balance ID:', openingBalanceId, 'Status:', status);
+
+                // Populate the modal form fields
+                $('#modalTitle').text('Edit Opening Balance');
+                $('#formMethod').val('PUT');
+                $('#openingBalanceId').val(openingBalanceId);
+                $('#openingBalanceField').val(openingBalance);
+                $('#descriptionField').val(description);
+                $('#statusField').val(status ? '1' : '0');
+
+                // Clear any previous error messages and invalid states
+                $('#formError').addClass('d-none').text('');
+                $('.is-invalid').removeClass('is-invalid');
+            });
+
+            // Handle opening balance form submission
             $('#openingBalanceForm').on('submit', function (e) {
                 e.preventDefault();
 
                 const formData = new FormData(this);
-                const method = $('#formMethod').val();
+                const submitBtn = $('#submitButton');
+                const originalBtnText = submitBtn.html();
+                const isEdit = $('#formMethod').val() === 'PUT';
                 const openingBalanceId = $('#openingBalanceId').val();
+                const url = isEdit ? `/opening-balances/${openingBalanceId}` : "{{ route('opening-balances.store') }}";
 
-                $('#formError').addClass('d-none').text('');
-                $('#openingBalanceForm input, #openingBalanceForm select, #openingBalanceForm textarea').removeClass('is-invalid');
+                console.log('Submitting form - URL:', url, 'Data:', Object.fromEntries(formData));
 
-                let url = "{{ route('opening-balances.store') }}";
-                if (method === 'PUT') {
-                    url = "{{ route('opening-balances.update', '') }}/" + openingBalanceId;
-                }
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
 
                 $.ajax({
                     url: url,
-                    method: method === 'PUT' ? 'POST' : 'POST',
+                    method: 'POST', // Laravel handles PUT via _method
                     data: formData,
                     contentType: false,
                     processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
                     success: function (response) {
-                        Swal.fire({
-                            title: method === 'PUT' ? 'Updated!' : 'Created!',
-                            text: response.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            $('#openingBalanceModal').modal('hide');
-                            location.reload();
-                        });
+                        if (response.success) {
+                            console.log('Operation successful:', response);
+                            Swal.fire({
+                                title: isEdit ? 'Updated!' : 'Created!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                $('#openingBalanceModal').modal('hide');
+                                location.reload(); // Refresh the page
+                            });
+                        }
                     },
                     error: function (xhr) {
+                        console.log('AJAX Error:', xhr);
+                        let errorMessage = 'Something went wrong. Please try again.';
                         if (xhr.status === 422) {
                             let errors = xhr.responseJSON.errors || {};
-                            let errorMessage = xhr.responseJSON.message;
-                            if (errorMessage && !Object.keys(errors).length) {
-                                $('#formError').removeClass('d-none').html(errorMessage);
-                            } else {
-                                let errorHtml = '<ul class="mb-0">';
-                                $.each(errors, function(field, messages) {
-                                    $('#' + field + 'Field').addClass('is-invalid');
-                                    $.each(messages, function(index, message) {
-                                        errorHtml += '<li>' + message + '</li>';
-                                    });
+                            let errorHtml = '<ul class="mb-0">';
+                            $.each(errors, function (field, messages) {
+                                const fieldId = field + 'Field';
+                                if ($('#' + fieldId).length) {
+                                    $('#' + fieldId).addClass('is-invalid');
+                                    $('#' + fieldId).next('.invalid-feedback').text(messages[0]);
+                                }
+                                $.each(messages, function (index, message) {
+                                    errorHtml += '<li>' + message + '</li>';
                                 });
-                                errorHtml += '</ul>';
-                                $('#formError').removeClass('d-none').html(errorHtml);
-                            }
-                        } else {
-                            $('#formError').removeClass('d-none')
-                                .html('Something went wrong. Please try again.<br>Error: ' +
-                                    (xhr.responseJSON.message || xhr.statusText));
+                            });
+                            errorHtml += '</ul>';
+                            errorMessage = errorHtml;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
                         }
+                        Swal.fire({
+                            title: 'Error!',
+                            html: errorMessage,
+                            icon: 'error'
+                        });
+                        submitBtn.prop('disabled', false).html(originalBtnText);
                     }
                 });
             });
@@ -248,28 +265,22 @@
                 $('#openingBalanceForm')[0].reset();
                 $('#formError').addClass('d-none').text('');
                 $('.is-invalid').removeClass('is-invalid');
+                $('#formMethod').val('POST');
+                $('#openingBalanceId').val('');
+                $('#modalTitle').text('Add New Opening Balance');
             });
 
-            // Delete opening balance handler
-            $(document).on('click', '.delete-opening-balance', function() {
+            // Handle delete opening balance
+            $(document).on('click', '.delete-opening-balance', function () {
                 const openingBalanceId = $(this).data('id');
                 const openingBalanceAmount = $(this).data('opening-balance');
-                const openingBalanceStatus = $(this).data('status');
 
-                if (openingBalanceStatus == 1) {
-                    Swal.fire({
-                        title: 'Cannot Delete Active Opening Balance',
-                        text: `The opening balance of ${openingBalanceAmount} is currently active. Please deactivate it first before deleting.`,
-                        icon: 'warning',
-                        confirmButtonText: 'OK'
-                    });
-                    return;
-                }
+                console.log('Delete clicked - Opening Balance ID:', openingBalanceId);
 
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: `You are about to delete the opening balance of ${openingBalanceAmount}. This action cannot be undone.`,
-                    icon: 'question',
+                    text: `You are about to delete the opening balance of ${parseFloat(openingBalanceAmount).toFixed(2)}. This cannot be undone!`,
+                    icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
@@ -277,40 +288,33 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('opening-balances.destroy', '') }}/" + openingBalanceId,
+                            url: `/opening-balances/${openingBalanceId}`,
                             method: 'DELETE',
-                            data: {
-                                _token: "{{ csrf_token() }}"
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
-                            success: function(response) {
-                                Swal.fire({
-                                    title: 'Deleted!',
-                                    text: response.message,
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    const $row = $(`button.delete-opening-balance[data-id="${openingBalanceId}"]`).closest('tr');
-                                    $row.fadeOut(300, function() {
-                                        $(this).remove();
-                                        // Check if table is empty after deletion
-                                        if ($('tbody tr').length === 0) {
-                                            $('tbody').html(
-                                                '<tr><td colspan="6" class="text-center">No opening balances found.</td></tr>'
-                                            );
-                                            // Show Add New button since no non-deleted records remain
-                                            $('#addNewButtonContainer').html(
-                                                '<button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#openingBalanceModal" data-action="create">' +
-                                                'Add New Opening Balance</button>'
-                                            );
-                                        }
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        location.reload(); // Refresh the page
                                     });
-                                });
+                                }
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
+                                console.log('Delete AJAX Error:', xhr);
+                                let errorMessage = 'Failed to delete opening balance';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
                                 Swal.fire({
                                     title: 'Error!',
-                                    text: xhr.responseJSON.message || 'Something went wrong',
+                                    text: errorMessage,
                                     icon: 'error'
                                 });
                             }

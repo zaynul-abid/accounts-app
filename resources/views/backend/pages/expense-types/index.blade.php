@@ -36,7 +36,7 @@
                                     </thead>
                                     <tbody>
                                     @forelse($expenseTypes as $index => $expenseType)
-                                        <tr>
+                                        <tr data-expense-id="{{ $expenseType->id }}">
                                             <td>{{ $expenseTypes->firstItem() + $index }}.</td>
                                             <td>{{ $expenseType->name }}</td>
                                             <td>{{ $expenseType->description ?? 'N/A' }}</td>
@@ -52,7 +52,7 @@
                                                             data-action="edit"
                                                             data-id="{{ $expenseType->id }}"
                                                             data-name="{{ $expenseType->name }}"
-                                                            data-description="{{ $expenseType->description }}"
+                                                            data-description="{{ $expenseType->description ?? '' }}"
                                                             data-type="{{ $expenseType->type }}"
                                                             data-status="{{ $expenseType->status }}">
                                                         Edit
@@ -139,7 +139,7 @@
                         <!-- Status -->
                         <div class="form-group">
                             <label for="statusField">Status</label>
-                            <select name="status" class="form-control" id="statusField">
+                            <select name="status" class="form-control" id="statusField" required>
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>
                             </select>
@@ -160,88 +160,108 @@
         $(document).ready(function () {
             console.log("✅ JS is working and jQuery is ready!");
 
-            // Handle modal show event (for both create and edit)
+            // Handle modal show event (for create only)
             $('#expenseTypeModal').on('show.bs.modal', function (event) {
                 const button = $(event.relatedTarget);
                 const action = button.data('action');
 
-                $('#expenseTypeForm')[0].reset();
-                $('#formError').addClass('d-none').text('');
-                $('.is-invalid').removeClass('is-invalid');
-
-                if (action === 'edit') {
-                    $('#modalTitle').text('Edit Expense Type');
-                    $('#formMethod').val('PUT');
-
-                    const expenseTypeId = button.data('id');
-                    $('#expenseTypeId').val(expenseTypeId);
-                    $('#nameField').val(button.data('name'));
-                    $('#descriptionField').val(button.data('description'));
-                    $('#typeField').val(button.data('type'));
-                    $('#statusField').val(button.data('status'));
-
-                    // If status is inactive (0), clear the selection
-                    if (button.data('status') == 0) {
-                        $('#statusField').val('');
-                    }
-                } else {
-                    $('#modalTitle').text('Add New Expense Type');
+                if (action === 'create') {
+                    $('#expenseTypeForm')[0].reset();
                     $('#formMethod').val('POST');
                     $('#expenseTypeId').val('');
+                    $('#modalTitle').text('Add New Expense Type');
+                    $('#formError').addClass('d-none').text('');
+                    $('.is-invalid').removeClass('is-invalid');
                 }
             });
 
-            // Handle form submission
+            // Handle edit expense type button click
+            $(document).on('click', '.edit-expense-type', function () {
+                const expenseTypeId = $(this).data('id');
+                const name = $(this).data('name');
+                const description = $(this).data('description') || '';
+                const type = $(this).data('type');
+                const status = $(this).data('status');
+
+                // Populate the modal form fields
+                $('#modalTitle').text('Edit Expense Type');
+                $('#formMethod').val('PUT');
+                $('#expenseTypeId').val(expenseTypeId);
+                $('#nameField').val(name);
+                $('#descriptionField').val(description);
+                $('#typeField').val(type);
+                $('#statusField').val(status ? '1' : '0');
+
+                // Clear any previous error messages and invalid states
+                $('#formError').addClass('d-none').text('');
+                $('.is-invalid').removeClass('is-invalid');
+            });
+
+            // Handle expense type form submission
             $('#expenseTypeForm').on('submit', function (e) {
                 e.preventDefault();
 
                 const formData = new FormData(this);
-                const method = $('#formMethod').val();
+                const submitBtn = $('#submitButton');
+                const originalBtnText = submitBtn.html();
+                const isEdit = $('#formMethod').val() === 'PUT';
                 const expenseTypeId = $('#expenseTypeId').val();
+                const url = isEdit ? `/expense-types/${expenseTypeId}` : "{{ route('expense-types.store') }}";
 
-                $('#formError').addClass('d-none').text('');
-                $('#expenseTypeForm input, #expenseTypeForm select, #expenseTypeForm textarea').removeClass('is-invalid');
-
-                let url = "{{ route('expense-types.store') }}";
-                if (method === 'PUT') {
-                    url = "{{ route('expense-types.update', '') }}/" + expenseTypeId;
-                }
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
 
                 $.ajax({
                     url: url,
-                    method: method === 'PUT' ? 'POST' : 'POST',
+                    method: 'POST', // Laravel handles PUT via _method
                     data: formData,
                     contentType: false,
                     processData: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
                     success: function (response) {
-                        Swal.fire({
-                            title: method === 'PUT' ? 'Updated!' : 'Created!',
-                            text: response.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            $('#expenseTypeModal').modal('hide');
-                            location.reload();
-                        });
+                        if (response.success) {
+                            Swal.fire({
+                                title: isEdit ? 'Updated!' : 'Created!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                $('#expenseTypeModal').modal('hide');
+                                if (isEdit) {
+                                    updateExpenseTypeInTable(response.expenseType);
+                                } else {
+                                    addExpenseTypeToTable(response.expenseType);
+                                }
+                            });
+                        }
                     },
                     error: function (xhr) {
+                        console.log('AJAX Error:', xhr);
+                        let errorMessage = 'Something went wrong. Please try again.';
                         if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
+                            let errors = xhr.responseJSON.errors || {};
                             let errorHtml = '<ul class="mb-0">';
-                            $.each(errors, function(field, messages) {
-                                $('#' + field + 'Field').addClass('is-invalid');
-                                $.each(messages, function(index, message) {
+                            $.each(errors, function (field, messages) {
+                                const fieldId = field + 'Field';
+                                if ($('#' + fieldId).length) {
+                                    $('#' + fieldId).addClass('is-invalid');
+                                    $('#' + fieldId).next('.invalid-feedback').text(messages[0]);
+                                }
+                                $.each(messages, function (index, message) {
                                     errorHtml += '<li>' + message + '</li>';
                                 });
                             });
                             errorHtml += '</ul>';
-                            $('#formError').removeClass('d-none').html(errorHtml);
-                        } else {
-                            $('#formError').removeClass('d-none')
-                                .html('Something went wrong. Please try again.<br>Error: ' +
-                                    (xhr.responseJSON.message || xhr.statusText));
+                            errorMessage = errorHtml;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
                         }
+                        $('#formError').removeClass('d-none').html(errorMessage);
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).html(originalBtnText);
                     }
                 });
             });
@@ -251,28 +271,79 @@
                 $('#expenseTypeForm')[0].reset();
                 $('#formError').addClass('d-none').text('');
                 $('.is-invalid').removeClass('is-invalid');
+                $('#formMethod').val('POST');
+                $('#expenseTypeId').val('');
+                $('#modalTitle').text('Add New Expense Type');
             });
 
-            // Delete expense type handler
-            $(document).on('click', '.delete-expense-type', function() {
-                const expenseTypeId = $(this).data('id');
-                const expenseTypeStatus = $(this).data('status');
-                const expenseTypeName = $(this).data('name');
-
-                if (expenseTypeStatus == 1) {
-                    Swal.fire({
-                        title: 'Cannot Delete Active Expense Type',
-                        text: `The expense type "${expenseTypeName}" is currently active. Please deactivate it first before deleting.`,
-                        icon: 'warning',
-                        confirmButtonText: 'OK'
-                    });
-                    return;
+            // Function to add new expense type to the table
+            function addExpenseTypeToTable(expenseType) {
+                const index = $('table tbody tr').length;
+                const newRow = `
+                    <tr data-expense-id="${expenseType.id}">
+                        <td>${index + 1}.</td>
+                        <td>${expenseType.name}</td>
+                        <td>${expenseType.description || 'N/A'}</td>
+                        <td>${expenseType.type}</td>
+                        <td style="color: ${expenseType.status ? 'green' : 'red'}">
+                            ${expenseType.status ? 'Active' : 'Inactive'}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-nowrap align-items-center">
+                                <button class="btn btn-sm btn-warning mr-1 edit-expense-type"
+                                        data-toggle="modal"
+                                        data-target="#expenseTypeModal"
+                                        data-action="edit"
+                                        data-id="${expenseType.id}"
+                                        data-name="${expenseType.name}"
+                                        data-description="${expenseType.description || ''}"
+                                        data-type="${expenseType.type}"
+                                        data-status="${expenseType.status}">
+                                    Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-expense-type"
+                                        data-id="${expenseType.id}"
+                                        data-status="${expenseType.status}"
+                                        data-name="${expenseType.name}">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                $('table tbody').prepend(newRow);
+                // Remove empty table message if present
+                if ($('tbody tr td').text() === 'No expense types found.') {
+                    $('tbody').empty();
+                    $('tbody').append(newRow);
                 }
+            }
+
+            // Function to update expense type in the table
+            function updateExpenseTypeInTable(expenseType) {
+                const row = $(`tr[data-expense-id="${expenseType.id}"]`);
+                if (row.length) {
+                    row.find('td:eq(1)').text(expenseType.name);
+                    row.find('td:eq(2)').text(expenseType.description || 'N/A');
+                    row.find('td:eq(3)').text(expenseType.type);
+                    row.find('td:eq(4)').css('color', expenseType.status ? 'green' : 'red')
+                        .text(expenseType.status ? 'Active' : 'Inactive');
+                    row.find('.edit-expense-type').data('name', expenseType.name)
+                        .data('description', expenseType.description || '')
+                        .data('type', expenseType.type)
+                        .data('status', expenseType.status);
+                }
+            }
+
+            // Handle delete expense type
+            $(document).on('click', '.delete-expense-type', function () {
+                const expenseTypeId = $(this).data('id');
+                const expenseTypeName = $(this).data('name');
 
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: `You are about to delete the expense type "${expenseTypeName}". This action cannot be undone.`,
-                    icon: 'question',
+                    text: `You are about to delete "${expenseTypeName}". This cannot be undone!`,
+                    icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
                     cancelButtonColor: '#3085d6',
@@ -280,34 +351,36 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('expense-types.destroy', '') }}/" + expenseTypeId,
+                            url: `/expense-types/${expenseTypeId}`,
                             method: 'DELETE',
-                            data: {
-                                _token: "{{ csrf_token() }}"
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
-                            success: function(response) {
-                                Swal.fire({
-                                    title: 'Deleted!',
-                                    text: response.message,
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    $(`button.delete-expense-type[data-id="${expenseTypeId}"]`)
-                                        .closest('tr').fadeOut(300, function() {
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    $(`tr[data-expense-id="${expenseTypeId}"]`).fadeOut(300, function() {
                                         $(this).remove();
                                         if ($('tbody tr').length === 0) {
-                                            $('tbody').html(
-                                                '<tr><td colspan="6" class="text-center">No expense types found.</td></tr>'
-                                            );
+                                            $('tbody').html('<tr><td colspan="6" class="text-center">No expense types found.</td></tr>');
                                         }
                                     });
-                                });
+                                }
                             },
-                            error: function(xhr) {
+                            error: function (xhr) {
+                                let errorMessage = 'Failed to delete expense type';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
                                 Swal.fire({
                                     title: 'Error!',
-                                    text: xhr.responseJSON.message || 'Something went wrong',
+                                    text: errorMessage,
                                     icon: 'error'
                                 });
                             }

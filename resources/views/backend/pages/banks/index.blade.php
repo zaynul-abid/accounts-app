@@ -168,7 +168,7 @@
                         <!-- Status -->
                         <div class="form-group">
                             <label for="isActiveField">Status</label>
-                            <select name="is_active" class="form-control" id="isActiveField">
+                            <select name="is_active" class="form-control" id="isActiveField" required>
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>
                             </select>
@@ -199,6 +199,7 @@
                 $('.is-invalid').removeClass('is-invalid');
                 $('#formMethod').val('POST');
                 $('#modalTitle').text('Add New Bank Account');
+                $('#isActiveField').val('1'); // Default to Active for new accounts
 
                 if (action === 'edit') {
                     $('#modalTitle').text('Edit Bank Account');
@@ -218,21 +219,20 @@
             $('#bankAccountForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Get form data
                 const formData = new FormData(this);
                 const submitBtn = $('#submitButton');
                 const originalBtnText = submitBtn.html();
                 const isEdit = $('#formMethod').val() === 'PUT';
                 const bankAccountId = $('#bankAccountId').val();
                 const url = isEdit ? `/bank-accounts/${bankAccountId}` : '{{ route("bank-accounts.store") }}';
-                const method = isEdit ? 'POST' : 'POST'; // Laravel uses POST with _method=PUT for updates
 
-                // Show loading state
+                console.log('Submitting form - URL:', url, 'Data:', Object.fromEntries(formData));
+
                 submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
 
                 $.ajax({
                     url: url,
-                    method: method,
+                    method: 'POST', // Laravel handles PUT via _method
                     data: formData,
                     contentType: false,
                     processData: false,
@@ -240,108 +240,74 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: response.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            $('#bankAccountModal').modal('hide');
-                            if (isEdit) {
-                                updateBankAccountInTable(response.bankAccount);
-                            } else {
-                                location.reload(); // For create, reload to update table
-                            }
-                        });
+                        if (response.success) {
+                            Swal.fire({
+                                title: isEdit ? 'Updated!' : 'Created!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                $('#bankAccountModal').modal('hide');
+                                location.reload(); // Refresh the page
+                            });
+                        }
                     },
                     error: function (xhr) {
-                        console.error('AJAX Error:', xhr); // Log error for debugging
+                        console.log('AJAX Error:', xhr);
                         let errorMessage = 'Something went wrong. Please try again.';
                         if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
+                            let errors = xhr.responseJSON.errors || {};
                             let errorHtml = '<ul class="mb-0">';
-                            $.each(errors, function(field, messages) {
+                            $.each(errors, function (field, messages) {
                                 const fieldId = field.replace('_', '') + 'Field';
                                 if ($('#' + fieldId).length) {
                                     $('#' + fieldId).addClass('is-invalid');
                                     $('#' + fieldId).next('.invalid-feedback').text(messages[0]);
                                 }
-                                $.each(messages, function(index, message) {
+                                $.each(messages, function (index, message) {
                                     errorHtml += '<li>' + message + '</li>';
                                 });
                             });
                             errorHtml += '</ul>';
-                            $('#formError').removeClass('d-none').html(errorHtml);
-                        } else {
-                            $('#formError').removeClass('d-none').html(errorMessage);
+                            errorMessage = errorHtml;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
                         }
-                    },
-                    complete: function() {
+                        Swal.fire({
+                            title: 'Error!',
+                            html: errorMessage,
+                            icon: 'error'
+                        });
                         submitBtn.prop('disabled', false).html(originalBtnText);
                     }
                 });
             });
-
-            // Function to update bank account in the table
-            function updateBankAccountInTable(bankAccount) {
-                const row = $(`tr[data-bank-account-id="${bankAccount.id}"]`);
-                row.html(`
-                    <td>${row.find('td:first').text()}</td>
-                    <td>${bankAccount.account_name}</td>
-                    <td>${bankAccount.account_number}</td>
-                    <td>${bankAccount.bank_name}</td>
-                    <td>${bankAccount.branch_name || 'N/A'}</td>
-                    <td>${bankAccount.ifsc_code || 'N/A'}</td>
-                    <td>${bankAccount.account_type.charAt(0).toUpperCase() + bankAccount.account_type.slice(1)}</td>
-                    <td style="color: ${bankAccount.is_active ? 'green' : 'red'}">
-                        ${bankAccount.is_active ? 'Active' : 'Inactive'}
-                    </td>
-                    <td>
-                        <div class="d-flex flex-nowrap align-items-center">
-                            <button class="btn btn-sm btn-warning mr-1 edit-bank-account"
-                                    data-toggle="modal"
-                                    data-target="#bankAccountModal"
-                                    data-action="edit"
-                                    data-id="${bankAccount.id}"
-                                    data-account-name="${bankAccount.account_name}"
-                                    data-account-number="${bankAccount.account_number}"
-                                    data-bank-name="${bankAccount.bank_name}"
-                                    data-branch-name="${bankAccount.branch_name}"
-                                    data-ifsc-code="${bankAccount.ifsc_code}"
-                                    data-account-type="${bankAccount.account_type}"
-                                    data-is-active="${bankAccount.is_active ? 1 : 0}">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-bank-account"
-                                    data-id="${bankAccount.id}"
-                                    data-account-name="${bankAccount.account_name}">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                `);
-            }
 
             // Clear form when modal is closed
             $('#bankAccountModal').on('hidden.bs.modal', function () {
                 $('#bankAccountForm')[0].reset();
                 $('#formError').addClass('d-none').text('');
                 $('.is-invalid').removeClass('is-invalid');
+                $('#formMethod').val('POST');
+                $('#bankAccountId').val('');
+                $('#modalTitle').text('Add New Bank Account');
             });
 
             // Delete bank account handler with confirmation
-            $(document).on('click', '.delete-bank-account', function() {
+            $(document).on('click', '.delete-bank-account', function () {
                 const bankAccountId = $(this).data('id');
                 const accountName = $(this).data('account-name');
+
+                console.log('Delete clicked - Bank Account ID:', bankAccountId);
 
                 Swal.fire({
                     title: 'Are you sure?',
                     text: `You are about to delete the bank account "${accountName}". This action cannot be undone!`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
                     confirmButtonText: 'Yes, delete it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -351,20 +317,30 @@
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Deleted!',
-                                    response.message,
-                                    'success'
-                                );
-                                $(`tr[data-bank-account-id="${bankAccountId}"]`).remove();
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        location.reload(); // Refresh the page
+                                    });
+                                }
                             },
-                            error: function(xhr) {
-                                Swal.fire(
-                                    'Error!',
-                                    xhr.responseJSON?.message || 'Failed to delete bank account',
-                                    'error'
-                                );
+                            error: function (xhr) {
+                                console.log('Delete AJAX Error:', xhr);
+                                let errorMessage = 'Failed to delete bank account';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: errorMessage,
+                                    icon: 'error'
+                                });
                             }
                         });
                     }

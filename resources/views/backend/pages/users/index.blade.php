@@ -142,7 +142,6 @@
                             <label for="usertypeField">User Type</label>
                             <select name="usertype" class="form-control" id="usertypeField" required>
                                 <option value="admin">Admin</option>
-                                <option value="superadmin">Superadmin</option>
                                 <option value="employee">Employee</option>
                             </select>
                             <div class="invalid-feedback"></div>
@@ -204,21 +203,20 @@
             $('#userForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Get form data
                 const formData = new FormData(this);
                 const submitBtn = $('#submitButton');
                 const originalBtnText = submitBtn.html();
                 const isEdit = $('#formMethod').val() === 'PUT';
                 const userId = $('#userId').val();
                 const url = isEdit ? `/users/${userId}` : '{{ route("users.store") }}';
-                const method = isEdit ? 'POST' : 'POST'; // Laravel uses POST with _method=PUT for updates
 
-                // Show loading state
+                console.log('Submitting form - URL:', url, 'Data:', Object.fromEntries(formData));
+
                 submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
 
                 $.ajax({
                     url: url,
-                    method: method,
+                    method: 'POST', // Laravel handles PUT via _method
                     data: formData,
                     contentType: false,
                     processData: false,
@@ -226,100 +224,74 @@
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function (response) {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: response.message,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            $('#userModal').modal('hide');
-                            if (isEdit) {
-                                updateUserInTable(response.user);
-                            } else {
-                                location.reload(); // For create, reload to update table
-                            }
-                        });
+                        if (response.success) {
+                            Swal.fire({
+                                title: isEdit ? 'Updated!' : 'Created!',
+                                text: response.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                $('#userModal').modal('hide');
+                                location.reload(); // Refresh the page
+                            });
+                        }
                     },
                     error: function (xhr) {
-                        console.error('AJAX Error:', xhr); // Log error for debugging
+                        console.log('AJAX Error:', xhr);
                         let errorMessage = 'Something went wrong. Please try again.';
                         if (xhr.status === 422) {
-                            let errors = xhr.responseJSON.errors;
+                            let errors = xhr.responseJSON.errors || {};
                             let errorHtml = '<ul class="mb-0">';
-                            $.each(errors, function(field, messages) {
+                            $.each(errors, function (field, messages) {
                                 const fieldId = field.replace('_', '') + 'Field';
                                 if ($('#' + fieldId).length) {
                                     $('#' + fieldId).addClass('is-invalid');
                                     $('#' + fieldId).next('.invalid-feedback').text(messages[0]);
                                 }
-                                $.each(messages, function(index, message) {
+                                $.each(messages, function (index, message) {
                                     errorHtml += '<li>' + message + '</li>';
                                 });
                             });
                             errorHtml += '</ul>';
-                            $('#formError').removeClass('d-none').html(errorHtml);
-                        } else {
-                            $('#formError').removeClass('d-none').html(errorMessage);
+                            errorMessage = errorHtml;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
                         }
-                    },
-                    complete: function() {
+                        Swal.fire({
+                            title: 'Error!',
+                            html: errorMessage,
+                            icon: 'error'
+                        });
                         submitBtn.prop('disabled', false).html(originalBtnText);
                     }
                 });
             });
-
-            // Function to update user in the table
-            function updateUserInTable(user) {
-                const row = $(`tr[data-user-id="${user.id}"]`);
-                row.html(`
-                    <td>${row.find('td:first').text()}</td>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td>${user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1)}</td>
-                    <td>${user.company_name || 'N/A'}</td>
-                    <td>
-                        <div class="d-flex flex-nowrap align-items-center">
-                            <button class="btn btn-sm btn-warning mr-1 edit-user"
-                                    data-toggle="modal"
-                                    data-target="#userModal"
-                                    data-action="edit"
-                                    data-id="${user.id}"
-                                    data-name="${user.name}"
-                                    data-email="${user.email}"
-                                    data-usertype="${user.usertype}"
-                                    data-company-id="${user.company_id}">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger delete-user"
-                                    data-id="${user.id}"
-                                    data-name="${user.name}">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                `);
-            }
 
             // Clear form when modal is closed
             $('#userModal').on('hidden.bs.modal', function () {
                 $('#userForm')[0].reset();
                 $('#formError').addClass('d-none').text('');
                 $('.is-invalid').removeClass('is-invalid');
+                $('#formMethod').val('POST');
+                $('#userId').val('');
+                $('#modalTitle').text('Add New User');
             });
 
             // Delete user handler with confirmation
-            $(document).on('click', '.delete-user', function() {
+            $(document).on('click', '.delete-user', function () {
                 const userId = $(this).data('id');
                 const userName = $(this).data('name');
+
+                console.log('Delete clicked - User ID:', userId);
 
                 Swal.fire({
                     title: 'Are you sure?',
                     text: `You are about to delete the user "${userName}". This action cannot be undone!`,
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
                     confirmButtonText: 'Yes, delete it!'
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -329,20 +301,30 @@
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
-                            success: function(response) {
-                                Swal.fire(
-                                    'Deleted!',
-                                    response.message,
-                                    'success'
-                                );
-                                $(`tr[data-user-id="${userId}"]`).remove();
+                            success: function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        title: 'Deleted!',
+                                        text: response.message,
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        location.reload(); // Refresh the page
+                                    });
+                                }
                             },
-                            error: function(xhr) {
-                                Swal.fire(
-                                    'Error!',
-                                    xhr.responseJSON?.message || 'Failed to delete user',
-                                    'error'
-                                );
+                            error: function (xhr) {
+                                console.log('Delete AJAX Error:', xhr);
+                                let errorMessage = 'Failed to delete user';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: errorMessage,
+                                    icon: 'error'
+                                });
                             }
                         });
                     }

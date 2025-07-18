@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BankAccountsController extends Controller
 
@@ -95,15 +96,32 @@ class BankAccountsController extends Controller
 
     public function destroy(BankAccount $bankAccount)
     {
-        if ($bankAccount->is_active) {
+        try {
+            if ($bankAccount->company_id !== auth()->user()->company_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to delete this bank account'
+                ], 403);
+            }
+
+            $bankAccount->delete();
+
             return response()->json([
-                'message' => 'Cannot delete active bank account'
-            ], 422);
+                'success' => true,
+                'message' => 'Bank Account deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Bank Account Delete Error: ' . $e->getMessage(), [
+                'bank_account_id' => $bankAccount->id,
+                'user_id' => auth()->id(),
+                'company_id' => auth()->user()->company_id ?? 'N/A',
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the bank account: ' . $e->getMessage()
+            ], 500);
         }
-
-        $bankAccount->delete();
-
-        return response()->json(['message' => 'Bank Account deleted successfully']);
     }
 }
 
