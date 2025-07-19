@@ -47,7 +47,7 @@ class ExpenseController extends Controller
                 'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
                 'supplier_id' => 'nullable|exists:suppliers,id',
                 'date_time' => 'required|date',
-                'payment_mode' => 'required|in:cash,credit,bank',
+                'payment_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
                 'payment_amount' => 'required|numeric|min:0',
                 'narration' => 'nullable|string',
             ]);
@@ -126,7 +126,7 @@ class ExpenseController extends Controller
             'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'date_time' => 'required|date',
-            'payment_mode' => 'required|in:cash,credit,bank',
+            'payment_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
             'payment_amount' => 'required|numeric|min:0',
             'narration' => 'nullable|string',
         ]);
@@ -155,6 +155,7 @@ class ExpenseController extends Controller
                 ]);
             } else {
                 SupplierTransaction::create([
+                    'company_id' => $expense->company_id,
                     'supplier_id' => $validated['supplier_id'],
                     'date' => $validated['date_time'],
                     'bill_number' => $validated['voucher_number'],

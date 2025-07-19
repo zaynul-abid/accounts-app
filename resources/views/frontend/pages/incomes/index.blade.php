@@ -271,7 +271,6 @@
                 padding: 0.25rem 0.4rem;
                 font-size: 0.7rem;
             }
-            /* Hide narration column header and cells in mobile view */
             .narration-column {
                 display: none;
             }
@@ -326,18 +325,12 @@
                     <div class="col-12 col-md-4">
                         <label class="form-label required-field">Receipt Mode</label>
                         <div class="d-flex gap-2 flex-wrap">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receipt_mode" id="cash" value="cash" checked>
-                                <label class="form-check-label" for="cash">Cash</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receipt_mode" id="credit" value="credit">
-                                <label class="form-check-label" for="credit">Credit</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receipt_mode" id="bank" value="bank">
-                                <label class="form-check-label" for="bank">Bank</label>
-                            </div>
+                            @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="receipt_mode" id="{{ $mode }}" value="{{ $mode }}" {{ $mode == 'cash' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="{{ $mode }}">{{ ucfirst(str_replace('&', ' & ', $mode)) }}</label>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
@@ -418,7 +411,9 @@
                             <td>{{ $income->incomeType->name }}</td>
                             <td data-amount="{{ $income->receipt_amount }}">{{ number_format($income->receipt_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ $income->receipt_mode == 'cash' ? 'bg-success' : ($income->receipt_mode == 'bank' ? 'bg-primary' : 'bg-info') }}">{{ ucfirst($income->receipt_mode) }}</span>
+                                <span class="badge {{ $income->receipt_mode == 'cash' ? 'bg-success' : ($income->receipt_mode == 'bank' ? 'bg-primary' : ($income->receipt_mode == 'credit' ? 'bg-info' : ($income->receipt_mode == 'touch&go' ? 'bg-warning' : ($income->receipt_mode == 'boost' ? 'bg-danger' : 'bg-secondary')))) }}">
+                                    {{ ucfirst(str_replace('&', ' & ', $income->receipt_mode)) }}
+                                </span>
                             </td>
                             <td class="narration-column">
                                 <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
@@ -960,8 +955,12 @@
         // Add new income to table
         function addIncomeToTable(income) {
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
-            const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' : (income.receipt_mode === 'bank' ? 'bg-primary' : 'bg-info');
-            const formattedMode = income.receipt_mode.charAt(0).toUpperCase() + income.receipt_mode.slice(1);
+            const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' :
+                income.receipt_mode === 'bank' ? 'bg-primary' :
+                    income.receipt_mode === 'credit' ? 'bg-info' :
+                        income.receipt_mode === 'touch&go' ? 'bg-warning' :
+                            income.receipt_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+            const formattedMode = income.receipt_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
             const rowCount = $('#incomeTable tbody tr').length + 1;
 
             const newRow = `
@@ -1000,8 +999,12 @@
         // Update income in table
         function updateIncomeInTable(income) {
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
-            const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' : (income.receipt_mode === 'bank' ? 'bg-primary' : 'bg-info');
-            const formattedMode = income.receipt_mode.charAt(0).toUpperCase() + income.receipt_mode.slice(1);
+            const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' :
+                income.receipt_mode === 'bank' ? 'bg-primary' :
+                    income.receipt_mode === 'credit' ? 'bg-info' :
+                        income.receipt_mode === 'touch&go' ? 'bg-warning' :
+                            income.receipt_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+            const formattedMode = income.receipt_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
 
             const $row = $(`#incomeTable tbody tr[data-income-id="${income.id}"]`);
             if ($row.length) {

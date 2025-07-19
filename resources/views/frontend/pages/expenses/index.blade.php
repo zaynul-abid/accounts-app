@@ -205,10 +205,6 @@
                 padding: 0.2rem 0.4rem;
                 font-size: 0.75rem;
             }
-            .table th, .table td {
-                font-size: 0.75rem;
-                padding: 0.5rem;
-            }
             .action-buttons {
                 flex-direction: column;
                 align-items: flex-start;
@@ -251,7 +247,6 @@
             .modal-content {
                 padding: 0.5rem;
             }
-
         }
     </style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -280,6 +275,10 @@
                 @csrf
                 <div class="row g-3">
                     <div class="col-md-4">
+                        <label for="voucher_number" class="form-label required-field">Voucher Number</label>
+                        <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
+                    </div>
+                    <div class="col-md-4">
                         <label for="expense_type_id" class="form-label required-field">Expense Type</label>
                         <div class="input-group">
                             <select class="form-select" id="expense_type_id" name="expense_type_id" required>
@@ -293,10 +292,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <label for="voucher_number" class="form-label required-field">Voucher Number</label>
-                        <input type="text" class="form-control" id="voucher_number" name="voucher_number" required>
-                    </div>
+
                     <div class="col-md-4">
                         <label for="date" class="form-label required-field">Date</label>
                         <input type="date" class="form-control" id="date" name="date" required>
@@ -305,18 +301,12 @@
                     <div class="col-md-4">
                         <label class="form-label required-field">Payment Mode</label>
                         <div class="d-flex gap-3 flex-wrap">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_mode" id="cash" value="cash" checked>
-                                <label class="form-check-label" for="cash">Cash</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_mode" id="credit" value="credit">
-                                <label class="form-check-label" for="credit">Credit</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_mode" id="bank" value="bank">
-                                <label class="form-check-label" for="bank">Bank</label>
-                            </div>
+                            @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_mode" id="{{ $mode }}" value="{{ $mode }}" {{ $mode == 'cash' ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="{{ $mode }}">{{ ucfirst(str_replace('&', ' & ', $mode)) }}</label>
+                                </div>
+                            @endforeach
                         </div>
                         <div id="bankAccountField" class="mt-2">
                             <label for="bank_account_id" class="form-label required-field">Bank Account</label>
@@ -420,7 +410,9 @@
                             <td>{{ $expense->reference_note ?? 'N/A' }}</td>
                             <td data-amount="{{ $expense->payment_amount }}">{{ number_format($expense->payment_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ $expense->payment_mode == 'cash' ? 'bg-success' : ($expense->payment_mode == 'bank' ? 'bg-primary' : 'bg-info') }}">{{ ucfirst($expense->payment_mode) }}</span>
+                                <span class="badge {{ $expense->payment_mode == 'cash' ? 'bg-success' : ($expense->payment_mode == 'bank' ? 'bg-primary' : ($expense->payment_mode == 'credit' ? 'bg-info' : ($expense->payment_mode == 'touch&go' ? 'bg-warning' : ($expense->payment_mode == 'boost' ? 'bg-danger' : 'bg-secondary')))) }}">
+                                    {{ ucfirst(str_replace('&', ' & ', $expense->payment_mode)) }}
+                                </span>
                             </td>
                             <td>{{ $expense->supplier->name ?? 'N/A' }}</td>
                             <td>
@@ -1116,8 +1108,12 @@
                 year: 'numeric'
             });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
-            const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' : (expense.payment_mode === 'bank' ? 'bg-primary' : 'bg-info');
-            const formattedMode = expense.payment_mode.charAt(0).toUpperCase() + expense.payment_mode.slice(1);
+            const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' :
+                expense.payment_mode === 'bank' ? 'bg-primary' :
+                    expense.payment_mode === 'credit' ? 'bg-info' :
+                        expense.payment_mode === 'touch&go' ? 'bg-warning' :
+                            expense.payment_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+            const formattedMode = expense.payment_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
             const rowCount = $('#expenseTable tbody tr').length + 1;
 
             const newRow = `
@@ -1161,8 +1157,12 @@
                 year: 'numeric'
             });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
-            const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' : (expense.payment_mode === 'bank' ? 'bg-primary' : 'bg-info');
-            const formattedMode = expense.payment_mode.charAt(0).toUpperCase() + expense.payment_mode.slice(1);
+            const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' :
+                expense.payment_mode === 'bank' ? 'bg-primary' :
+                    expense.payment_mode === 'credit' ? 'bg-info' :
+                        expense.payment_mode === 'touch&go' ? 'bg-warning' :
+                            expense.payment_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+            const formattedMode = expense.payment_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
 
             const $row = $(`#expenseTable tbody tr[data-expense-id="${expense.id}"]`);
             if ($row.length) {
