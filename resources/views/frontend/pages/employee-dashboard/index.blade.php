@@ -61,20 +61,23 @@
         <div class="profile-section p-6 flex-1">
             <div class="flex flex-col items-center">
 
-                <h3 class="text-xl font-semibold text-gray-800">{{auth()->user()->name}}</h3>
-                <p class="text-sm text-gray-500 mb-2">{{auth()->user()->usertype}}</p>
+
+                    <h3 class="text-xl font-semibold text-gray-800">{{auth()->user()->name}}</h3>
+                    <p class="text-sm text-gray-500 mb-2">{{auth()->user()->usertype ?? '-' }}</p>
 
 
-                <div class="mt-6 w-full">
-                    <div class="mb-3">
-                        <p class="text-xs text-gray-500">Email</p>
-                        <p class="text-sm text-gray-700">{{auth()->user()->email}}</p>
-                    </div>
-                    <div class="mb-3">
-                        <p class="text-xs text-gray-500">Company</p>
-                        <p class="text-sm text-gray-700">{{ auth()->user()->company->name }}
-                        </p>
-                    </div>
+                    <div class="mt-6 w-full">
+                        <div class="mb-3">
+                            <p class="text-xs text-gray-500">Email</p>
+                            <p class="text-sm text-gray-700">{{ auth()->user()->email ?? '-' }}</p>
+
+                        </div>
+                        <div class="mb-3">
+                            <p class="text-xs text-gray-500">Company</p>
+                            <p class="text-sm text-gray-700">
+                                {{ auth()->user()->company?->name ?? '-' }}
+                            </p>
+                        </div>
 
                 </div>
             </div>
