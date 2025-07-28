@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\ExpenseType;
 use App\Models\Supplier;
 use App\Models\SupplierTransaction;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -87,29 +88,43 @@ class ExpenseController extends Controller
                     ]);
                 }
 
+                // Create transaction entry
+                Transaction::create([
+                    'company_id' => $user->company_id,
+                    'date' => \Carbon\Carbon::parse($validated['date_time'])->toDateString(),
+                    'transaction_mode' => 'expense',
+                    'income_id' => null,
+                    'expense_id' => $expense->id,
+                    'transaction_type' => $expense->expenseType->name,
+                    'payment_mode' => $validated['payment_mode'],
+                    'bank_id' => $validated['bank_account_id'],
+                    'debit' => '0',
+                    'credit' => $validated['payment_amount'],
+                    'created_by' => $user->id,
+                ]);
+
                 // Return response based on request type
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => true,
-                        'message' => 'Expense recorded successfully',
+                        'message' => 'Expense and transaction recorded successfully',
                         'expense' => $expense->load('expenseType', 'createdBy', 'bankAccount', 'supplier'),
                     ], 201);
                 }
 
                 return redirect()->route('expenses.index')
-                    ->with('success', 'Expense recorded successfully!');
+                    ->with('success', 'Expense and transaction recorded successfully!');
             });
         } catch (\Exception $e) {
             // Log the error for debugging
-            \Log::error('Failed to record expense: ' . $e->getMessage());
+            \Log::error('Failed to record expense or transaction: ' . $e->getMessage());
 
             // Return error response based on request type
             return $request->wantsJson() || $request->ajax()
-                ? response()->json(['success' => false, 'message' => 'Failed to record expense: ' . $e->getMessage()], 500)
-                : redirect()->back()->withErrors(['error' => 'Failed to record expense']);
+                ? response()->json(['success' => false, 'message' => 'Failed to record expense or transaction: ' . $e->getMessage()], 500)
+                : redirect()->back()->withErrors(['error' => 'Failed to record expense or transaction']);
         }
     }
-
     public function edit(Expense $expense)
     {
         return response()->json([

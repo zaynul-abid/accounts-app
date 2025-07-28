@@ -13,30 +13,34 @@
                 flex-direction: column;
                 gap: 1rem;
             }
-
             .filter-controls {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 0.75rem;
             }
-
             .filter-controls .buttons {
                 flex-direction: column;
                 gap: 0.5rem;
             }
         }
-
         input::placeholder {
             color: #9ca3af;
             font-style: italic;
         }
+        .income-only .expense-table-container {
+            display: none;
+        }
+        .expense-only .income-table-container {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
-
 <!-- Header -->
 <div class="text-black text-center py-4 shadow-md bg-white">
-    <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">Income Expense Summary Report</h1>
+    <h1 class="text-xl md:text-2xl font-bold uppercase tracking-wide">
+        {{ request()->get('report') === 'income' ? 'Income Report' : (request()->get('report') === 'expense' ? 'Expense Report' : 'Income Expense Summary Report') }}
+    </h1>
 </div>
 
 <!-- Filter Section -->
@@ -45,15 +49,21 @@
         <!-- Filter Options -->
         <div class="flex flex-wrap gap-4">
             <label class="inline-flex items-center">
-                <input type="radio" name="type" value="all" class="form-radio type-filter" checked>
+                <input type="radio" name="type" value="all" class="form-radio type-filter"
+                    {{ !request()->has('report') ? 'checked' : '' }}
+                    {{ request()->get('report') === 'income' || request()->get('report') === 'expense' ? 'disabled' : '' }}>
                 <span class="ml-2 text-sm md:text-base">All</span>
             </label>
             <label class="inline-flex items-center">
-                <input type="radio" name="type" value="income" class="form-radio type-filter">
+                <input type="radio" name="type" value="income" class="form-radio type-filter"
+                    {{ request()->get('report') === 'income' ? 'checked' : '' }}
+                    {{ request()->get('report') === 'expense' ? 'disabled' : '' }}>
                 <span class="ml-2 text-sm md:text-base">Income</span>
             </label>
             <label class="inline-flex items-center">
-                <input type="radio" name="type" value="expense" class="form-radio type-filter">
+                <input type="radio" name="type" value="expense" class="form-radio type-filter"
+                    {{ request()->get('report') === 'expense' ? 'checked' : '' }}
+                    {{ request()->get('report') === 'income' ? 'disabled' : '' }}>
                 <span class="ml-2 text-sm md:text-base">Expense</span>
             </label>
         </div>
@@ -76,12 +86,12 @@
                     Clear
                 </button>
                 @if(auth()->user()->isEmployee())
-                    <a href="{{route('employee.dashboard')}}"
+                    <a href="{{ route('employee.dashboard') }}"
                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition text-sm w-full md:w-auto text-center">
                         Exit
                     </a>
                 @else
-                    <a href="{{route('admin.dashboard')}}"
+                    <a href="{{ route('admin.dashboard') }}"
                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition text-sm w-full md:w-auto text-center">
                         Exit
                     </a>
@@ -92,9 +102,9 @@
 </div>
 
 <!-- Tables -->
-<div class="max-w-6xl mx-auto mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="max-w-6xl mx-auto mt-4 grid grid-cols-1 md:grid-cols-2 gap-6" id="table-container">
     <!-- Income Table -->
-    <div class="bg-white shadow-md rounded-md overflow-hidden">
+    <div class="bg-white shadow-md rounded-md overflow-hidden income-table-container">
         <div class="bg-green-100 px-4 py-2 font-semibold text-green-800">Income</div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -123,7 +133,7 @@
     </div>
 
     <!-- Expense Table -->
-    <div class="bg-white shadow-md rounded-md overflow-hidden">
+    <div class="bg-white shadow-md rounded-md overflow-hidden expense-table-container">
         <div class="bg-red-100 px-4 py-2 font-semibold text-red-800">Expense</div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -155,8 +165,12 @@
 <!-- Summary Footer -->
 <div class="max-w-6xl mx-auto mt-4 mb-10 bg-white shadow-md rounded-md p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
     <div>
-        <p><strong>Total Income:</strong> <span id="total-income" class="text-green-600">₹0</span></p>
-        <p><strong>Total Expense:</strong> <span id="total-expense" class="text-red-600">₹0</span></p>
+        <p id="total-income-row" class="{{ request()->get('report') === 'expense' ? 'hidden' : '' }}">
+            <strong>Total Income:</strong> <span id="total-income" class="text-green-600">₹0</span>
+        </p>
+        <p id="total-expense-row" class="{{ request()->get('report') === 'income' ? 'hidden' : '' }}">
+            <strong>Total Expense:</strong> <span id="total-expense" class="text-red-600">₹0</span>
+        </p>
         <p><strong>Balance:</strong> <span id="balance">₹0</span></p>
     </div>
     <div>
@@ -174,6 +188,36 @@
             income: { column: 'date', order: 'desc' },
             expense: { column: 'date', order: 'desc' }
         };
+
+        // Function to get query parameter
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Set initial filter, visibility, and radio button state based on query parameter
+        const reportType = getQueryParam('report');
+        if (reportType === 'income') {
+            $('input[name="type"][value="income"]').prop('checked', true);
+            $('#table-container').addClass('income-only');
+            $('#total-expense-row').hide();
+            $('#total-income-row').show();
+            $('input[name="type"][value="expense"]').prop('disabled', true);
+            $('input[name="type"][value="all"]').prop('disabled', true);
+        } else if (reportType === 'expense') {
+            $('input[name="type"][value="expense"]').prop('checked', true);
+            $('#table-container').addClass('expense-only');
+            $('#total-income-row').hide();
+            $('#total-expense-row').show();
+            $('input[name="type"][value="income"]').prop('disabled', true);
+            $('input[name="type"][value="all"]').prop('disabled', true);
+        } else {
+            $('input[name="type"][value="all"]').prop('checked', true);
+            $('#table-container').removeClass('income-only expense-only');
+            $('#total-income-row').show();
+            $('#total-expense-row').show();
+            $('input[name="type"]').prop('disabled', false);
+        }
 
         function fetchData(applyDateFilter = false) {
             const type = $('input[name="type"]:checked').val();
@@ -202,6 +246,32 @@
                     $('#balance').text('₹' + response.balance);
                     $('#opening-balance').text('₹' + response.opening_balance);
                     $('#net-balance').text('₹' + response.net_balance);
+
+                    // Update table and summary visibility based on type
+                    if (type === 'income') {
+                        $('#table-container').addClass('income-only').removeClass('expense-only');
+                        $('#total-expense-row').hide();
+                        $('#total-income-row').show();
+                    } else if (type === 'expense') {
+                        $('#table-container').addClass('expense-only').removeClass('income-only');
+                        $('#total-income-row').hide();
+                        $('#total-expense-row').show();
+                    } else {
+                        $('#table-container').removeClass('income-only expense-only');
+                        $('#total-income-row').show();
+                        $('#total-expense-row').show();
+                    }
+
+                    // Maintain disabled state after fetch
+                    if (reportType === 'income') {
+                        $('input[name="type"][value="expense"]').prop('disabled', true);
+                        $('input[name="type"][value="all"]').prop('disabled', true);
+                    } else if (reportType === 'expense') {
+                        $('input[name="type"][value="income"]').prop('disabled', true);
+                        $('input[name="type"][value="all"]').prop('disabled', true);
+                    } else {
+                        $('input[name="type"]').prop('disabled', false);
+                    }
                 }
             });
         }
@@ -217,6 +287,15 @@
         });
 
         $('.type-filter').on('change', function () {
+            // Update URL without reloading
+            const type = $(this).val();
+            let newUrl = '/income-expense-summary';
+            if (type === 'income') {
+                newUrl += '?report=income';
+            } else if (type === 'expense') {
+                newUrl += '?report=expense';
+            }
+            history.pushState({}, '', newUrl);
             fetchData(false);
         });
 
@@ -239,4 +318,3 @@
 </script>
 </body>
 </html>
-

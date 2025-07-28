@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Shopping-@yield('title')</title>
+    <title>Smart Pay-@yield('title')</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Google Font: Source Sans Pro -->
@@ -120,5 +120,16 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString(); // e.g., "10:32:15 AM"
+        document.getElementById('current-time').textContent = timeString;
+    }
+
+    // Initial call and then every 1 second
+    updateTime();
+    setInterval(updateTime, 1000);
+</script>
 </body>
 </html>

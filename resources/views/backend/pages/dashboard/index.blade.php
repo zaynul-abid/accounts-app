@@ -12,13 +12,13 @@
             <div class="row">
                 <div class="col-lg-3 col-6">
                     <!-- small box -->
-                    <div class="small-box bg-info">
+                    <div class="small-box bg-success">
                         <div class="inner">
                             <h3>{{ number_format($totalIncome, 2) }}</h3>
                             <p>Total Incomes</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-bag"></i>
+                            <i class="fas fa-hand-holding-usd"></i>
                         </div>
                         <a href="{{ route('incomes.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
@@ -26,13 +26,13 @@
                 <!-- ./col -->
                 <div class="col-lg-3 col-6">
                     <!-- small box -->
-                    <div class="small-box bg-success">
+                    <div class="small-box bg-danger bg-opacity-5">
                         <div class="inner">
                             <h3>{{ number_format($totalExpense, 2) }}</h3>
                             <p>Total Expenses</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-stats-bars"></i>
+                            <i class="fas fa-money-bill-wave"></i>
                         </div>
                         <a href="{{route('expenses.index')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
@@ -40,27 +40,27 @@
                 <!-- ./col -->
                 <div class="col-lg-3 col-6">
                     <!-- small box -->
-                    <div class="small-box bg-warning">
+                    <div class="small-box bg-info">
                         <div class="inner">
                             <h3>{{number_format($balance)}}</h3>
                             <p>Balance</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-person-add"></i>
+                            <i class="fas fa-balance-scale"></i>
                         </div>
-                        <a href="{{ route('income-expense-summary') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        <a href="{{ route('transactions.index') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
                 </div>
                 <!-- ./col -->
                 <div class="col-lg-3 col-6">
                     <!-- small box -->
-                    <div class="small-box bg-danger">
+                    <div class="small-box bg-warning">
                         <div class="inner">
                             <h3>{{$suppliers}}</h3>
                             <p>Suppliers</p>
                         </div>
                         <div class="icon">
-                            <i class="ion ion-pie-graph"></i>
+                            <i class="fas fa-people-carry"></i>
                         </div>
                         <a href="{{route('suppliers.index')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
@@ -88,21 +88,22 @@
                         </div>
                         <div class="card-body">
                             <div class="info-box">
-                                <span class="info-box-icon bg-info"><i class="fas fa-wallet"></i></span>
+                                <span class="info-box-icon bg-success"><i class="fas fa-wallet"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Total Income</span>
                                     <span class="info-box-number">{{ number_format($totalIncome, 2) }}</span>
                                 </div>
                             </div>
                             <div class="info-box">
-                                <span class="info-box-icon bg-success"><i class="fas fa-receipt"></i></span>
+                                <span class="info-box-icon bg-danger"><i class="fas fa-receipt"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Total Expense</span>
                                     <span class="info-box-number">{{ number_format($totalExpense, 2) }}</span>
                                 </div>
                             </div>
                             <div class="info-box">
-                                <span class="info-box-icon bg-warning"><i class="fas fa-balance-scale"></i></span>
+                                <span class="info-box-icon
+                                 bg-info"><i class="fas fa-balance-scale"></i></span>
                                 <div class="info-box-content">
                                     <span class="info-box-text">Current Balance</span>
                                     <span class="info-box-number">{{ number_format($balance, 2) }}</span>
@@ -125,7 +126,7 @@
                     labels: ['Income', 'Expense'],
                     datasets: [{
                         data: [{{ $totalIncome }}, {{ $totalExpense }}],
-                        backgroundColor: ['#17a2b8', '#28a745']
+                        backgroundColor: ['#28a745','#d71818']
                     }]
                 },
                 options: {

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Expense Recording System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -162,6 +163,18 @@
             padding: 0.3rem 0.6rem;
             font-size: 0.8rem;
         }
+        .pagination {
+            margin-top: 1rem;
+        }
+        .pagination .page-link {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
         @media (max-width: 767px) {
             .input-group-sm {
                 max-width: 150px;
@@ -175,13 +188,6 @@
                 padding: 0.2rem 0.5rem;
                 font-size: 0.75rem;
             }
-        }
-        @media (max-width: 576px) {
-            .input-group-sm {
-                max-width: 120px;
-            }
-        }
-        @media (max-width: 767px) {
             .container {
                 padding: 0.5rem;
             }
@@ -233,6 +239,9 @@
             }
         }
         @media (max-width: 576px) {
+            .input-group-sm {
+                max-width: 120px;
+            }
             .col-md-4 {
                 flex: 0 0 100%;
                 max-width: 100%;
@@ -249,7 +258,6 @@
             }
         }
     </style>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
 <div class="container">
@@ -292,7 +300,6 @@
                             </button>
                         </div>
                     </div>
-
                     <div class="col-md-4">
                         <label for="date" class="form-label required-field">Date</label>
                         <input type="date" class="form-control" id="date" name="date" required>
@@ -301,7 +308,7 @@
                     <div class="col-md-4">
                         <label class="form-label required-field">Payment Mode</label>
                         <div class="d-flex gap-3 flex-wrap">
-                            @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
+                            @foreach(['cash', 'bank', 'credit'] as $mode)
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_mode" id="{{ $mode }}" value="{{ $mode }}" {{ $mode == 'cash' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="{{ $mode }}">{{ ucfirst(str_replace('&', ' & ', $mode)) }}</label>
@@ -384,7 +391,7 @@
                 Expense recorded successfully!
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="table-responsive">
+            <div class="table-container table-responsive">
                 <table class="table table-hover" id="expenseTable">
                     <thead>
                     <tr>
@@ -401,7 +408,7 @@
                         @endif
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="expenseTableBody">
                     @foreach($expenses as $index => $expense)
                         <tr data-expense-id="{{ $expense->id }}">
                             <td>{{ $index + 1 + ($expenses->perPage() * ($expenses->currentPage() - 1)) }}</td>
@@ -422,10 +429,10 @@
                             </td>
                             @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                                 <td class="action-buttons">
-                                    <button class="btn btn-sm btn-warning rounded-3">
+                                    <button class="btn btn-sm btn-warning rounded-3 edit-expense" data-expense-id="{{ $expense->id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger rounded-3">
+                                    <button class="btn btn-sm btn-danger rounded-3 delete-expense" data-expense-id="{{ $expense->id }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -438,8 +445,8 @@
             <div class="mt-3 fw-semibold">
                 Total Amount: <span id="totalAmount">0.00</span>
             </div>
-            <nav class="mt-3" aria-label="Page navigation">
-                {{ $expenses->links() }}
+            <nav class="mt-3 pagination-container" aria-label="Page navigation">
+                {{ $expenses->appends(request()->except('page'))->links('vendor.pagination.bootstrap-5') }}
             </nav>
         </div>
     </div>
@@ -704,11 +711,7 @@
         // Clear search on input clear
         $('#searchInput').on('input', function() {
             if ($(this).val() === '') {
-                $('#expenseTable tbody tr').show();
-                $('#expenseTable tbody tr').each(function(index) {
-                    $(this).find('td:first').text(index + 1);
-                });
-                updateTotalAmount();
+                loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
             }
         });
 
@@ -984,16 +987,8 @@
                         showConfirmButton: false
                     });
 
-                    if (response.expense) {
-                        $(`#expenseTable tbody tr[data-expense-id="${response.expense.id}"]`).remove();
-                        if (isEditing) {
-                            updateExpenseInTable(response.expense);
-                        } else {
-                            addExpenseToTable(response.expense);
-                        }
-                    }
-                    $('#searchInput').val('').trigger('input');
-                    updateTotalAmount();
+                    // Reload the current page of expenses
+                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
                 },
                 error: function(xhr) {
                     let errorMessage = 'An error occurred. Please try again.';
@@ -1013,8 +1008,8 @@
         });
 
         // Edit button click
-        $(document).on('click', '.btn-warning', function() {
-            const expenseId = $(this).closest('tr').data('expense-id');
+        $(document).on('click', '.edit-expense', function() {
+            const expenseId = $(this).data('expense-id');
             $.ajax({
                 url: `/expenses/${expenseId}/edit`,
                 method: 'GET',
@@ -1049,8 +1044,8 @@
         });
 
         // Delete button click
-        $(document).on('click', '.btn-danger', function() {
-            const expenseId = $(this).closest('tr').data('expense-id');
+        $(document).on('click', '.delete-expense', function() {
+            const expenseId = $(this).data('expense-id');
             const $row = $(this).closest('tr');
 
             Swal.fire({
@@ -1069,23 +1064,21 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            $row.fadeOut(300, function() {
-                                $(this).remove();
-                                $('#expenseTable tbody tr:visible').each(function(index) {
-                                    $(this).find('td:first').text(index + 1);
+                            if (response.redirect) {
+                                window.location.href = response.redirectUrl;
+                            } else {
+                                $row.fadeOut(300, function() {
+                                    $(this).remove();
+                                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
                                 });
-                                updateTotalAmount();
-                                if ($('table tbody tr').length === 0 && response.redirect) {
-                                    window.location.href = response.redirectUrl;
-                                }
-                            });
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: response.message || 'Expense deleted successfully',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: response.message || 'Expense deleted successfully',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
                         },
                         error: function(xhr) {
                             Swal.fire({
@@ -1099,14 +1092,49 @@
             });
         });
 
+        // Function to load expenses via AJAX
+        function loadExpenses(page) {
+            const searchTerm = $('#searchInput').val();
+            $.ajax({
+                url: '{{ route("expenses.index") }}',
+                method: 'GET',
+                data: { page: page, search: searchTerm },
+                success: function(response) {
+                    // Update table body
+                    $('#expenseTableBody').html($(response).find('#expenseTableBody').html());
+                    // Update pagination
+                    $('.pagination-container').html($(response).find('.pagination-container').html());
+                    // Update total amount
+                    updateTotalAmount();
+                    // Re-attach pagination event listeners
+                    attachPaginationListeners();
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load expenses.'
+                    });
+                }
+            });
+        }
+
+        // Function to attach pagination event listeners
+        function attachPaginationListeners() {
+            $('.pagination .page-link').off('click').on('click', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page') || $(this).attr('href').split('page=')[1];
+                if (page) {
+                    loadExpenses(page);
+                }
+            });
+        }
+
+        // Initial attachment of pagination listeners
+        attachPaginationListeners();
+
         // Add new expense to table
         function addExpenseToTable(expense) {
-            const date = new Date(expense.date_time);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
             const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' :
                 expense.payment_mode === 'bank' ? 'bg-primary' :
@@ -1132,14 +1160,14 @@
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
             <td class="action-buttons">
-                <button class="btn btn-sm btn-warning rounded-3">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger rounded-3">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-@endif
+                <button class="btn btn-sm btn-warning rounded-3 edit-expense" data-expense-id="${expense.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger rounded-3 delete-expense" data-expense-id="${expense.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+                @endif
             </tr>
             `;
             $('#expenseTable tbody').prepend(newRow);
@@ -1150,12 +1178,6 @@
 
         // Update expense in table
         function updateExpenseInTable(expense) {
-            const date = new Date(expense.date_time);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
             const formattedAmount = parseFloat(expense.payment_amount).toFixed(2);
             const badgeClass = expense.payment_mode === 'cash' ? 'bg-success' :
                 expense.payment_mode === 'bank' ? 'bg-primary' :
@@ -1181,10 +1203,10 @@
                 </td>
                 @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
                 <td class="action-buttons">
-                    <button class="btn btn-sm btn-warning rounded-3">
+                    <button class="btn btn-sm btn-warning rounded-3 edit-expense" data-expense-id="${expense.id}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger rounded-3">
+                    <button class="btn btn-sm btn-danger rounded-3 delete-expense" data-expense-id="${expense.id}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>

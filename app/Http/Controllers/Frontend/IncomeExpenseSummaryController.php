@@ -28,6 +28,7 @@ class IncomeExpenseSummaryController extends Controller
         return view('frontend.pages.income-expense-summary.index',
             compact('expenses', 'incomes'));
     }
+
     public function getData(Request $request)
     {
         $type = $request->query('type', 'all');

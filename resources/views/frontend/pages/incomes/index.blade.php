@@ -170,6 +170,18 @@
         .btn-narration-mobile:hover {
             background: #138496;
         }
+        .pagination {
+            margin-top: 1rem;
+        }
+        .pagination .page-link {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
         @media (max-width: 768px) {
             body {
                 padding: 0.5rem;
@@ -403,7 +415,7 @@
                         @endif
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="incomeTableBody">
                     @foreach($incomes as $index => $income)
                         <tr data-income-id="{{ $income->id }}">
                             <td>{{ $index + 1 + ($incomes->perPage() * ($incomes->currentPage() - 1)) }}</td>
@@ -425,10 +437,10 @@
                                     <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
                                         <i class="fas fa-comment"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-warning rounded-3">
+                                    <button class="btn btn-sm btn-warning rounded-3 edit-income" data-income-id="{{ $income->id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-danger rounded-3">
+                                    <button class="btn btn-sm btn-danger rounded-3 delete-income" data-income-id="{{ $income->id }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -441,8 +453,8 @@
             <div class="mt-2 fw-semibold">
                 Total Amount: <span id="totalAmount">0.00</span>
             </div>
-            <nav class="mt-2" aria-label="Page navigation">
-                {{ $incomes->links() }}
+            <nav class="mt-2 pagination-container" aria-label="Page navigation">
+                {{ $incomes->appends(request()->except('page'))->links('vendor.pagination.bootstrap-5') }}
             </nav>
         </div>
     </div>
@@ -840,16 +852,8 @@
                         showConfirmButton: false
                     });
 
-                    if (response.income) {
-                        $(`#incomeTable tbody tr[data-income-id="${response.income.id}"]`).remove();
-                        if (isEditing) {
-                            updateIncomeInTable(response.income);
-                        } else {
-                            addIncomeToTable(response.income);
-                        }
-                    }
-                    $('#searchInput').val('').trigger('input');
-                    updateTotalAmount();
+                    // Reload the current page of incomes
+                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1);
                 },
                 error: function(xhr) {
                     let errorMessage = 'An error occurred. Please try again.';
@@ -869,8 +873,8 @@
         });
 
         // Edit button click
-        $(document).on('click', '.btn-warning', function() {
-            const incomeId = $(this).closest('tr').data('income-id');
+        $(document).on('click', '.edit-income', function() {
+            const incomeId = $(this).data('income-id');
             $.ajax({
                 url: `/incomes/${incomeId}/edit`,
                 method: 'GET',
@@ -902,8 +906,8 @@
         });
 
         // Delete button click
-        $(document).on('click', '.btn-danger', function() {
-            const incomeId = $(this).closest('tr').data('income-id');
+        $(document).on('click', '.delete-income', function() {
+            const incomeId = $(this).data('income-id');
             const $row = $(this).closest('tr');
 
             Swal.fire({
@@ -922,23 +926,21 @@
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            $row.fadeOut(300, function() {
-                                $(this).remove();
-                                $('#incomeTable tbody tr:visible').each(function(index) {
-                                    $(this).find('td:first').text(index + 1);
+                            if (response.redirect) {
+                                window.location.href = response.redirectUrl;
+                            } else {
+                                $row.fadeOut(300, function() {
+                                    $(this).remove();
+                                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1);
                                 });
-                                updateTotalAmount();
-                                if ($('table tbody tr').length === 0 && response.redirect) {
-                                    window.location.href = response.redirectUrl;
-                                }
-                            });
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: response.message || 'Income deleted successfully',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: response.message || 'Income deleted successfully',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
                         },
                         error: function(xhr) {
                             Swal.fire({
@@ -951,6 +953,47 @@
                 }
             });
         });
+
+        // Function to load incomes via AJAX
+        function loadIncomes(page) {
+            const searchTerm = $('#searchInput').val();
+            $.ajax({
+                url: '{{ route("incomes.index") }}',
+                method: 'GET',
+                data: { page: page, search: searchTerm },
+                success: function(response) {
+                    // Update table body
+                    $('#incomeTableBody').html($(response).find('#incomeTableBody').html());
+                    // Update pagination
+                    $('.pagination-container').html($(response).find('.pagination-container').html());
+                    // Update total amount
+                    updateTotalAmount();
+                    // Re-attach pagination event listeners
+                    attachPaginationListeners();
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load incomes.'
+                    });
+                }
+            });
+        }
+
+        // Function to attach pagination event listeners
+        function attachPaginationListeners() {
+            $('.pagination .page-link').off('click').on('click', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page') || $(this).attr('href').split('page=')[1];
+                if (page) {
+                    loadIncomes(page);
+                }
+            });
+        }
+
+        // Initial attachment of pagination listeners
+        attachPaginationListeners();
 
         // Add new income to table
         function addIncomeToTable(income) {
@@ -980,10 +1023,10 @@
                 <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
                         <i class="fas fa-comment"></i>
                     </button>
-                    <button class="btn btn-sm btn-warning rounded-3">
+                    <button class="btn btn-sm btn-warning rounded-3 edit-income" data-income-id="${income.id}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger rounded-3">
+                    <button class="btn btn-sm btn-danger rounded-3 delete-income" data-income-id="${income.id}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -1024,10 +1067,10 @@
                     <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="${income.narration || '-'}">
                         <i class="fas fa-comment"></i>
                     </button>
-                    <button class="btn btn-sm btn-warning rounded-3">
+                    <button class="btn btn-sm btn-warning rounded-3 edit-income" data-income-id="${income.id}">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger rounded-3">
+                    <button class="btn btn-sm btn-danger rounded-3 delete-income" data-income-id="${income.id}">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>

@@ -34,6 +34,10 @@ class Income extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'income_id');
+    }
 
 
 

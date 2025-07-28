@@ -51,6 +51,8 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/suppliers/{supplier}/transactions', [SupplierTransactionController::class, 'transactions'])->name('suppliers.transactions');
     Route::post('/suppliers/{supplier}/transactions', [SupplierTransactionController::class, 'storePayment'])->name('suppliers.transactions.store');
 
+    Route::get('/transactions', [\App\Http\Controllers\Backend\TransactionController::class, 'index'])->name('transactions.index');
+
 
 });
 

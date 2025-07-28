@@ -57,12 +57,44 @@ return new class extends Migration
      */
     public function down()
     {
-        // The down method remains the same as before
         Schema::table('bank_accounts', function (Blueprint $table) {
             $table->dropForeign(['company_id']);
             $table->dropColumn('company_id');
         });
 
-        // ... repeat for all other tables ...
+        Schema::table('expenses', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('expense_types', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('incomes', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('income_types', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('opening_balances', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('suppliers', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
+
+        Schema::table('supplier_transactions', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
+            $table->dropColumn('company_id');
+        });
     }
 };
