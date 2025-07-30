@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script src="//unpkg.com/alpinejs" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
@@ -16,6 +17,63 @@
             <p class="text-lg">Access your account and manage your companies with ease.</p>
         </div>
     </div>
+    @if(session('show_company_error'))
+        <div x-data="{ open: true }"
+             x-show="open"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 p-4">
+
+            <div x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 @click.away="open = false"
+                 class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700 transition-all transform">
+
+                <!-- Header with icon -->
+                <div class="bg-gradient-to-r from-red-500 to-red-600 p-5 text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Company Verification Required</h2>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-4">
+                    <p class="text-gray-700 dark:text-gray-300 text-center">
+                        You must select your assigned company to continue. Please return to the welcome page and choose the correct company from the dropdown menu.
+                    </p>
+
+                    <div class="flex justify-center pt-2">
+                        <a href="{{ route('home') }}"
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all hover:scale-[1.02]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Return to Welcome Page
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 dark:bg-gray-700/30 px-4 py-3 text-center">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Need help? Contact support@yourcompany.com
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
 
     <div class="flex-1 flex items-center justify-center p-8">
         <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-8">
@@ -23,27 +81,14 @@
             <form id="loginForm" method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="mb-6">
+                    @if($company)
+                        <input type="hidden" name="company_id" value="{{ $company->id }}">
+                    @endif
                     <label for="email" class="block text-sm font-medium text-gray-900 mb-2">Email address</label>
                     <input type="email" id="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition @error('email') border-red-500 @enderror" placeholder="you@example.com" required autofocus onblur="fetchCompanies(this.value)" value="{{ old('email') }}">
                     @error('email')
                     <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
                     @enderror
-                </div>
-
-                <div id="companyInfoContainer" class="mb-6 hidden animate-fade-in">
-                    <div id="companySelectContainer" class="hidden">
-                        <label for="company_id" class="block text-sm font-medium text-gray-900 mb-2">Company</label>
-                        <select id="company_id" name="company_id" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-[url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"%236b7280\"%3E%3Cpath stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1.25rem] disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-[url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"%239ca3af\"%3E%3Cpath stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"/%3E%3C/svg%3E')]">
-                        <option value="">Select your company</option>
-                        </select>
-                        @error('company_id')
-                        <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div id="companyNameContainer" class="hidden">
-                        <label class="block text-sm font-medium text-gray-900 mb-2">Company</label>
-                        <div id="company_name" class="text-sm font-medium text-gray-900"></div>
-                    </div>
                 </div>
 
                 <div class="mb-6">
@@ -63,98 +108,5 @@
 </div>
 
 <div id="toastContainer" class="fixed top-5 right-5 z-[9999]"></div>
-
-<script>
-    function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `p-3 mb-2 rounded-lg text-white text-sm shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-        toast.textContent = message;
-        document.getElementById('toastContainer').appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    async function fetchCompanies(email) {
-        if (!email) return;
-
-        const companyInfoContainer = document.getElementById('companyInfoContainer');
-        const companySelectContainer = document.getElementById('companySelectContainer');
-        const companyNameContainer = document.getElementById('companyNameContainer');
-        const companySelect = document.getElementById('company_id');
-        const companyName = document.getElementById('company_name');
-
-        companyInfoContainer.style.display = 'block';
-        if (companySelectContainer) companySelectContainer.classList.add('hidden');
-        if (companyNameContainer) companyNameContainer.classList.add('hidden');
-
-        try {
-            const response = await fetch('/get-companies?email=' + encodeURIComponent(email), {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.usertype) {
-                if (['admin', 'superadmin'].includes(data.usertype) && data.companies.length > 0) {
-                    if (companySelectContainer) {
-                        companySelectContainer.classList.remove('hidden');
-                        companySelect.disabled = true;
-                        companySelect.innerHTML = '<option value="">Select your company</option>';
-                        data.companies.forEach(company => {
-                            const option = document.createElement('option');
-                            option.value = company.id;
-                            option.textContent = company.name;
-                            if (company.id == data.current_company_id) option.selected = true;
-                            companySelect.appendChild(option);
-                        });
-                        companySelect.disabled = false;
-                    }
-                } else if (data.company_name) {
-                    if (companyNameContainer) {
-                        companyNameContainer.classList.remove('hidden');
-                        companyName.textContent = data.company_name;
-                    }
-                } else {
-                    companyInfoContainer.style.display = 'none';
-                    showToast('No company information available', 'error');
-                }
-            } else {
-                companyInfoContainer.style.display = 'none';
-                showToast(data.message || 'No companies found', 'error');
-            }
-        } catch (err) {
-            console.error(err);
-            showToast('Error loading company information', 'error');
-        }
-    }
-
-    document.getElementById('company_id')?.addEventListener('change', async function () {
-        const email = document.getElementById('email').value;
-        const companyId = this.value;
-        if (!email || !companyId) return;
-
-        try {
-            const response = await fetch('/update-company', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ email, company_id: companyId })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                showToast('Company updated');
-            } else {
-                showToast(data.message || 'Update failed', 'error');
-            }
-        } catch (err) {
-            showToast('Update error', 'error');
-        }
-    });
-</script>
 </body>
 </html>

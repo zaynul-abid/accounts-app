@@ -11,22 +11,51 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Crypt;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.login');
+        $encryptedId = $request->query('company');
+
+        $company = null;
+        if ($encryptedId) {
+            try {
+                $companyId = Crypt::decryptString($encryptedId);
+                $company = \App\Models\Company::find($companyId);
+            } catch (\Exception $e) {
+                // Handle invalid encryption
+                return redirect()->route('home')->with('error', 'Invalid company ID');
+            }
+        }
+        return view('auth.login',compact('company'));
     }
+
 
     /**
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $company = Company::findOrFail($request->company_id);
+        $user = User::where('email', $request->email)->firstOrFail();
+
+
+        if ($user->usertype === 'admin') {
+            $user->company_id = $request->company_id;
+            $user->save();
+        } elseif ($user->usertype === 'employee') {
+            // Check if selected company matches assigned company (optional)
+            if ($user->company_id != $request->company_id) {
+                return redirect()->route('login')->with('show_company_error', true);
+            }
+        }
+
+
         $request->authenticate();
         $request->session()->regenerate();
 

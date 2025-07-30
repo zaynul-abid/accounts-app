@@ -11,7 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [HomeController::class,'index']);
+Route::get('/', [HomeController::class,'index'])->name('home');
 Route::post('/redirect', [HomeController::class, 'redirectToLogin'])->name('welcome.redirect');
 // routes/web.php
 Route::post('/ajax-authenticate', [AuthenticatedSessionController::class, 'ajaxAuthenticate']);

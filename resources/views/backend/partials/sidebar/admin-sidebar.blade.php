@@ -11,6 +11,7 @@
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="info">
                 <a href="#" class="d-block">{{ auth()->check() ? auth()->user()->name : 'Guest' }}</a>
+                <a href="#" class="d-block">{{ auth()->user()->company?->name ?? 'NULL' }}</a>
                 <small class="text-muted">{{ auth()->check() ? ucfirst(auth()->user()->usertype) : '' }}</small><br>
                 <h6 id="current-time" class="text-muted"></h6>
             </div>

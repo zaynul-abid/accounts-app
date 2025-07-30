@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accounts Website</title>
+    <script src="//unpkg.com/alpinejs" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         @keyframes fadeIn {
@@ -43,13 +44,55 @@
             Record, analyze, and succeed with our intuitive financial solutions.
         </p>
 
-        <!-- Call to Action Button -->
-        <div class="mt-10 animate-fadeIn" style="animation-delay: 0.4s;">
-            <a href="{{route('login')}}"
-               class="inline-block px-12 py-4 bg-green-500 text-white rounded-lg
-                          font-semibold text-lg btn-pulse">
-                Welcome
-            </a>
+        <div x-data="{ open: false }">
+
+            <!-- ✅ Welcome Button (opens modal) -->
+            <div class="mt-10 animate-fadeIn" style="animation-delay: 0.4s;">
+                <button
+                    @click="open = true"
+                    class="inline-block px-12 py-4 bg-green-500 text-white rounded-lg
+                   font-semibold text-lg btn-pulse">
+                    Welcome
+                </button>
+            </div>
+
+            <!-- ✅ Modal Overlay and Box -->
+            <div
+                x-show="open"
+                x-transition
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            >
+                <div
+                    @click.away="open = false"
+                    class="bg-white w-full max-w-md p-6 rounded-lg shadow-lg"
+                >
+                    @php
+                        use Illuminate\Support\Facades\Crypt;
+                    @endphp
+
+                    <form method="GET" action="{{ route('login') }}">
+                        <div class="mb-4">
+                            <label for="company_id" class="block text-sm font-medium text-gray-700 mb-2">Select Company</label>
+                            <select id="company_id" name="company"
+                                    class="block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm
+                   focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
+                   text-gray-700 text-sm" required>
+                                <option value="" disabled selected>-- Choose a Company --</option>
+                                @foreach($companies as $company)
+                                    <option value="{{ Crypt::encryptString($company->id) }}">{{ $company->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <button type="submit"
+                                class="inline-block px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-base">
+                            Go to Login
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
         </div>
 
         <!-- Decorative Financial Icons -->
@@ -66,5 +109,6 @@
         </div>
     </div>
 </div>
+
 </body>
 </html>
