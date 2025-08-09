@@ -56,8 +56,8 @@ class SupplierController extends Controller
                     'transaction_mode' => null,
                     'expense_id' => null,
                     'transaction_type' => 'opening balance',
-                    'debit' => $validated['opening_balance'],
-                    'credit' => 0,
+                    'debit' => 0,
+                    'credit' => $validated['opening_balance'],
                     'notes' => 'Opening balance for new supplier',
                 ]);
 

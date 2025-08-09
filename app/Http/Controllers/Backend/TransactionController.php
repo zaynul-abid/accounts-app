@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -18,10 +19,11 @@ class TransactionController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
+        $today = Carbon::today('Asia/Kolkata')->toDateString(); // Explicit IST timezone
 
         // Validate and handle custom date filter
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $startDate = $request->input('start_date', $today);
+        $endDate = $request->input('end_date', $today);
 
         $request->validate([
             'start_date' => 'nullable|date',
@@ -33,7 +35,9 @@ class TransactionController extends Controller
 
         if ($startDate && $endDate) {
             Log::info('Filtering transactions between ' . $startDate . ' and ' . $endDate);
-            $query->whereBetween('transactions.date', [$startDate, $endDate]);
+            $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
+            $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
+            $query->whereBetween('transactions.date', [$start, $end]);
         }
 
         // Calculate balances for all payment modes
@@ -48,7 +52,7 @@ class TransactionController extends Controller
             $totalDebit = $result->total_debit ?? 0;
             $totalCredit = $result->total_credit ?? 0;
             $balances[$mode] = $totalDebit - $totalCredit;
-            Log::info("Balance for $mode: debit=$totalDebit, credit=$totalCredit, balance=" . ($totalDebit - $totalCredit)); // Debug balance
+            Log::info("Balance for $mode: debit=$totalDebit, credit=$totalCredit, balance=" . ($totalDebit - $totalCredit));
         }
 
         // Get individual bank accounts and their balances
@@ -67,7 +71,7 @@ class TransactionController extends Controller
                 'name' => $bank->account_name,
                 'balance' => $totalDebit - $totalCredit,
             ];
-            Log::info("Bank {$bank->account_name} balance: debit=$totalDebit, credit=$totalCredit, balance=" . ($totalDebit - $totalCredit)); // Debug bank balance
+            Log::info("Bank {$bank->account_name} balance: debit=$totalDebit, credit=$totalCredit, balance=" . ($totalDebit - $totalCredit));
         }
 
         // Handle AJAX request for transaction details
@@ -103,15 +107,25 @@ class TransactionController extends Controller
                 $hasBankColumn = true;
             }
 
+            // Pagination parameters
+            $perPage = (int) $request->input('per_page', 10);
+            $page = (int) $request->input('page', 1);
+
             $transactions = $transactionsQuery->where(function($q) {
                 $q->whereNotNull('debit')->orWhereNotNull('credit');
             })
                 ->orderBy('transactions.date', 'desc')
-                ->get();
+                ->paginate($perPage, ['*'], 'page', $page);
 
             return response()->json([
                 'success' => true,
-                'transactions' => $transactions,
+                'transactions' => $transactions->items(),
+                'pagination' => [
+                    'current_page' => $transactions->currentPage(),
+                    'last_page' => $transactions->lastPage(),
+                    'per_page' => $transactions->perPage(),
+                    'total' => $transactions->total(),
+                ],
                 'selectedName' => $selectedName,
                 'selectedBalance' => $selectedBalance,
                 'hasBankColumn' => $hasBankColumn,

@@ -11,8 +11,10 @@ class ExpenseTypeController extends Controller
 {
     public function index()
     {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
         try {
-            $expenseTypes = ExpenseType::where('company_id', auth()->user()->company_id)
+            $expenseTypes = ExpenseType::where('company_id', $user->company_id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(10);
 

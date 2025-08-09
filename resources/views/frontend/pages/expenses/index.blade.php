@@ -308,7 +308,7 @@
                     <div class="col-md-4">
                         <label class="form-label required-field">Payment Mode</label>
                         <div class="d-flex gap-3 flex-wrap">
-                            @foreach(['cash', 'bank', 'credit'] as $mode)
+                                    @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_mode" id="{{ $mode }}" value="{{ $mode }}" {{ $mode == 'cash' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="{{ $mode }}">{{ ucfirst(str_replace('&', ' & ', $mode)) }}</label>
@@ -379,11 +379,15 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Expense Records</h6>
-            <div class="input-group input-group-sm w-25 w-md-15">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search...">
-                <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                    <i class="fas fa-search"></i>
-                </button>
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-outline-primary btn-sm" id="showAllButton">Show All</button>
+                <div class="input-group input-group-sm w-md-15">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
             </div>
         </div>
         <div class="card-body">
@@ -417,7 +421,13 @@
                             <td>{{ $expense->reference_note ?? 'N/A' }}</td>
                             <td data-amount="{{ $expense->payment_amount }}">{{ number_format($expense->payment_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ $expense->payment_mode == 'cash' ? 'bg-success' : ($expense->payment_mode == 'bank' ? 'bg-primary' : ($expense->payment_mode == 'credit' ? 'bg-info' : ($expense->payment_mode == 'touch&go' ? 'bg-warning' : ($expense->payment_mode == 'boost' ? 'bg-danger' : 'bg-secondary')))) }}">
+                                <span class="badge {{ 
+                                    $expense->payment_mode == 'cash' ? 'bg-success' : 
+                                    ($expense->payment_mode == 'bank' ? 'bg-primary' :
+                                    ($expense->payment_mode == 'credit' ? 'bg-info' : 
+                                    ($expense->payment_mode == 'touch&go' ? 'bg-warning' : 
+                                    ($expense->payment_mode == 'boost' ? 'bg-dark' : 'bg-danger')))) 
+                                    }}">
                                     {{ ucfirst(str_replace('&', ' & ', $expense->payment_mode)) }}
                                 </span>
                             </td>
@@ -641,6 +651,9 @@
     $(document).ready(function () {
         console.log("✅ JS is working and jQuery is ready!");
 
+        // Track show all state
+        let showAll = false;
+
         // Calculate and update total amount
         function updateTotalAmount() {
             let total = 0;
@@ -711,8 +724,15 @@
         // Clear search on input clear
         $('#searchInput').on('input', function() {
             if ($(this).val() === '') {
-                loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
+                loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
             }
+        });
+
+        // Show All button toggle
+        $('#showAllButton').click(function() {
+            showAll = !showAll;
+            $(this).text(showAll ? 'Show Today' : 'Show All');
+            loadExpenses(1, showAll);
         });
 
         // Narration modal handling
@@ -988,7 +1008,7 @@
                     });
 
                     // Reload the current page of expenses
-                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
+                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
                 },
                 error: function(xhr) {
                     let errorMessage = 'An error occurred. Please try again.';
@@ -1069,7 +1089,7 @@
                             } else {
                                 $row.fadeOut(300, function() {
                                     $(this).remove();
-                                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1);
+                                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
                                 });
                                 Swal.fire({
                                     title: 'Deleted!',
@@ -1093,12 +1113,12 @@
         });
 
         // Function to load expenses via AJAX
-        function loadExpenses(page) {
+        function loadExpenses(page, showAll) {
             const searchTerm = $('#searchInput').val();
             $.ajax({
                 url: '{{ route("expenses.index") }}',
                 method: 'GET',
-                data: { page: page, search: searchTerm },
+                data: { page: page, search: searchTerm, show_all: showAll ? 1 : 0 },
                 success: function(response) {
                     // Update table body
                     $('#expenseTableBody').html($(response).find('#expenseTableBody').html());
@@ -1125,7 +1145,7 @@
                 e.preventDefault();
                 const page = $(this).data('page') || $(this).attr('href').split('page=')[1];
                 if (page) {
-                    loadExpenses(page);
+                    loadExpenses(page, showAll);
                 }
             });
         }

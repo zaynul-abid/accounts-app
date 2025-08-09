@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Income Recording System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,6 +14,7 @@
             font-family: 'Inter', sans-serif;
             padding: 1rem;
         }
+
         .card {
             border: none;
             border-radius: 1rem;
@@ -20,6 +22,7 @@
             overflow: hidden;
             background: #ffffff;
         }
+
         .card-header {
             background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
             color: white;
@@ -27,24 +30,34 @@
             padding: 0.75rem 1rem;
             font-weight: 600;
             border-radius: 1rem 1rem 0 0;
+            min-width: 0; /* Prevent overflow */
         }
+
+        .card-header .d-flex > * {
+            flex-shrink: 1; /* Allow elements to shrink proportionally */
+        }
+
         .form-label {
             font-weight: 500;
             color: #374151;
             font-size: 0.85rem;
             margin-bottom: 0.3rem;
         }
+
         .required-field::after {
             content: " *";
             color: #dc3545;
         }
+
         #bankAccountField {
             display: none;
         }
+
         .table {
             border-radius: 0.5rem;
             overflow: hidden;
         }
+
         .table th {
             background-color: #e9ecef;
             font-weight: 600;
@@ -52,32 +65,39 @@
             font-size: 0.8rem;
             color: #4b5563;
         }
+
         .table td {
             vertical-align: middle;
             font-size: 0.85rem;
         }
+
         .badge {
             padding: 0.35em 0.65em;
             font-weight: 500;
             font-size: 0.8rem;
         }
+
         .modal-content {
             border-radius: 1rem;
             border: none;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
+
         .table-container {
             max-height: 400px;
             overflow-y: auto;
         }
+
         .btn-sm {
             padding: 0.25rem 0.5rem;
             font-size: 0.8rem;
         }
+
         .narration-btn {
             font-size: 0.8rem;
             border-color: #17a2b8;
         }
+
         .form-control, .form-select {
             padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
@@ -85,24 +105,30 @@
             border-radius: 0.5rem;
             border: 1px solid #ced4da;
         }
+
         .input-group .btn {
             padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
             border-radius: 0 0.5rem 0.5rem 0;
         }
+
         .form-check {
             margin-bottom: 0.35rem;
         }
+
         .form-check-input {
             margin-top: 0.2rem;
         }
+
         .card-body {
             padding: 1rem;
         }
+
         textarea.form-control {
             height: 3.5rem;
             resize: none;
         }
+
         .btn-add {
             background: #28a745;
             color: white;
@@ -112,30 +138,37 @@
             border-radius: 0.5rem;
             transition: background 0.3s ease;
         }
+
         .btn-add:hover {
             background: #218838;
         }
+
         .btn-primary {
             background: #007bff;
             border: none;
             border-radius: 0.5rem;
             padding: 0.35rem 0.9rem;
         }
+
         .btn-primary:hover {
             background: #0056b3;
         }
+
         .btn-outline-secondary {
             border-radius: 0.5rem;
             padding: 0.35rem 0.9rem;
         }
+
         .modal-header {
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
+
         .modal-title {
             font-size: 1rem;
             font-weight: 600;
         }
+
         .btn-secondary {
             background: #6c757d;
             border: none;
@@ -144,10 +177,12 @@
             font-size: 0.85rem;
             transition: background 0.3s ease;
         }
+
         .btn-secondary:hover {
             background: #5a6268;
             color: white;
         }
+
         .action-buttons {
             display: flex;
             gap: 0.3rem;
@@ -155,9 +190,11 @@
             align-items: center;
             white-space: nowrap;
         }
+
         .search-input-group {
-            width: 15% !important;
+            width: 200px !important; /* Fixed width for consistency */
         }
+
         .btn-narration-mobile {
             background: #17a2b8;
             color: white;
@@ -167,27 +204,36 @@
             border-radius: 0.5rem;
             transition: background 0.3s ease;
         }
+
         .btn-narration-mobile:hover {
             background: #138496;
         }
+
         .pagination {
             margin-top: 1rem;
         }
+
         .pagination .page-link {
             font-size: 0.85rem;
             padding: 0.3rem 0.6rem;
             border-radius: 0.5rem;
         }
+
         .pagination .page-item.active .page-link {
             background-color: #007bff;
             border-color: #007bff;
         }
+
         @media (max-width: 768px) {
             body {
                 padding: 0.5rem;
             }
             .card-header {
                 padding: 0.5rem;
+            }
+            .card-header .d-flex {
+                flex-direction: row;
+                gap: 0.5rem;
             }
             .card-body {
                 padding: 0.75rem;
@@ -199,6 +245,10 @@
             .btn-sm {
                 padding: 0.2rem 0.4rem;
                 font-size: 0.75rem;
+            }
+            #showAllButton {
+                font-size: 0.75rem;
+                padding: 0.2rem 0.4rem;
             }
             .table th, .table td {
                 font-size: 0.75rem;
@@ -222,7 +272,7 @@
                 font-size: 0.7rem;
             }
             .search-input-group {
-                width: 25% !important;
+                width: 150px !important; /* Smaller width for tablets */
             }
             .input-group .form-control {
                 font-size: 0.75rem;
@@ -233,12 +283,17 @@
                 font-size: 0.75rem;
             }
         }
+
         @media (max-width: 576px) {
             .container {
                 padding: 0.25rem;
             }
             .card-header h6 {
                 font-size: 0.9rem;
+            }
+            .card-header .d-flex {
+                flex-direction: row;
+                gap: 0.3rem;
             }
             .form-label {
                 font-size: 0.75rem;
@@ -273,7 +328,7 @@
                 -webkit-overflow-scrolling: touch;
             }
             .search-input-group {
-                width: 35% !important;
+                width: 120px !important; /* Smaller width for mobile */
             }
             .input-group .form-control {
                 font-size: 0.7rem;
@@ -282,6 +337,10 @@
             .input-group .btn {
                 padding: 0.25rem 0.4rem;
                 font-size: 0.7rem;
+            }
+            #showAllButton {
+                font-size: 0.7rem;
+                padding: 0.15rem 0.3rem;
             }
             .narration-column {
                 display: none;
@@ -388,11 +447,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Income Records</h6>
-            <div class="input-group search-input-group">
-                <input type="text" class="form-control" id="searchInput" placeholder="Search...">
-                <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                    <i class="fas fa-search"></i>
-                </button>
+            <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <button class="btn btn-outline-primary btn-sm" id="showAllButton">Show All</button>
+                <div class="input-group input-group-sm search-input-group">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -423,7 +485,12 @@
                             <td>{{ $income->incomeType->name }}</td>
                             <td data-amount="{{ $income->receipt_amount }}">{{ number_format($income->receipt_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ $income->receipt_mode == 'cash' ? 'bg-success' : ($income->receipt_mode == 'bank' ? 'bg-primary' : ($income->receipt_mode == 'credit' ? 'bg-info' : ($income->receipt_mode == 'touch&go' ? 'bg-warning' : ($income->receipt_mode == 'boost' ? 'bg-danger' : 'bg-secondary')))) }}">
+                                <span class="badge {{ 
+                                    $income->receipt_mode == 'cash' ? 'bg-success' : 
+                                    ($income->receipt_mode == 'bank' ? 'bg-primary' : 
+                                    ($income->receipt_mode == 'credit' ? 'bg-info' : 
+                                    ($income->receipt_mode == 'touch&go' ? 'bg-warning' : 
+                                    ($income->receipt_mode == 'boost' ? 'bg-dark' : 'bg-danger')))) }}">
                                     {{ ucfirst(str_replace('&', ' & ', $income->receipt_mode)) }}
                                 </span>
                             </td>
@@ -598,6 +665,9 @@
     $(document).ready(function () {
         console.log("✅ JS is working and jQuery is ready!");
 
+        // Track show all state
+        let showAll = false;
+
         // Calculate and update total amount
         function updateTotalAmount() {
             let total = 0;
@@ -647,12 +717,15 @@
         // Clear search on input clear
         $('#searchInput').on('input', function() {
             if ($(this).val() === '') {
-                $('#incomeTable tbody tr').show();
-                $('#incomeTable tbody tr').each(function(index) {
-                    $(this).find('td:first').text(index + 1);
-                });
-                updateTotalAmount();
+                loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
             }
+        });
+
+        // Show All button toggle
+        $('#showAllButton').click(function() {
+            showAll = !showAll;
+            $(this).text(showAll ? 'Show Today' : 'Show All');
+            loadIncomes(1, showAll);
         });
 
         // Narration modal handling
@@ -853,7 +926,7 @@
                     });
 
                     // Reload the current page of incomes
-                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1);
+                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
                 },
                 error: function(xhr) {
                     let errorMessage = 'An error occurred. Please try again.';
@@ -931,7 +1004,7 @@
                             } else {
                                 $row.fadeOut(300, function() {
                                     $(this).remove();
-                                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1);
+                                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
                                 });
                                 Swal.fire({
                                     title: 'Deleted!',
@@ -955,12 +1028,12 @@
         });
 
         // Function to load incomes via AJAX
-        function loadIncomes(page) {
+        function loadIncomes(page, showAll) {
             const searchTerm = $('#searchInput').val();
             $.ajax({
                 url: '{{ route("incomes.index") }}',
                 method: 'GET',
-                data: { page: page, search: searchTerm },
+                data: { page: page, search: searchTerm, show_all: showAll ? 1 : 0 },
                 success: function(response) {
                     // Update table body
                     $('#incomeTableBody').html($(response).find('#incomeTableBody').html());
@@ -987,7 +1060,7 @@
                 e.preventDefault();
                 const page = $(this).data('page') || $(this).attr('href').split('page=')[1];
                 if (page) {
-                    loadIncomes(page);
+                    loadIncomes(page, showAll);
                 }
             });
         }

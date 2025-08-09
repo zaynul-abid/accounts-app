@@ -92,19 +92,47 @@
         }
         .date-filter-form {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
             align-items: flex-end;
         }
         .date-filter-form .form-group {
             flex: 1;
-            min-width: 150px;
+            min-width: 120px;
         }
         .date-filter-form .btn {
             height: 38px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
         }
         .invalid-feedback {
             font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .date-filter-form .form-group {
+                min-width: 100px;
+            }
+            .date-filter-form .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .date-filter-form input[type="date"] {
+                font-size: 0.75rem;
+                padding: 0.3rem;
+            }
+        }
+        @media (max-width: 576px) {
+            .date-filter-form .form-group {
+                min-width: 80px;
+            }
+            .date-filter-form .btn {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.5rem;
+            }
+            .date-filter-form input[type="date"] {
+                font-size: 0.65rem;
+                padding: 0.2rem;
+            }
         }
     </style>
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -192,15 +220,16 @@
                         <form id="dateFilterForm" class="date-filter-form">
                             <div class="form-group">
                                 <label for="fromDate">From Date</label>
-                                <input type="date" class="form-control" id="fromDate" name="from_date">
+                                <input type="date" class="form-control" id="fromDate" name="from_date" value="{{ \Carbon\Carbon::today('Asia/Kolkata')->format('Y-m-d') }}">
                                 <div class="invalid-feedback"></div>
                             </div>
                             <div class="form-group">
                                 <label for="toDate">To Date</label>
-                                <input type="date" class="form-control" id="toDate" name="to_date">
+                                <input type="date" class="form-control" id="toDate" name="to_date" value="{{ \Carbon\Carbon::today('Asia/Kolkata')->format('Y-m-d') }}">
                                 <div class="invalid-feedback"></div>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-sm" id="filterBtn">Filter</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="toggle-date-filter">Show All</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="filterBtn">Filter</button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="clearFilterBtn">Clear</button>
                         </form>
                     </div>
@@ -272,6 +301,26 @@
     $(document).ready(function () {
         console.log("✅ JS is working and jQuery is ready!");
 
+        let showAll = false; // Track show all state (false = filter by date, true = show all)
+        let currentSupplierId = null; // Track currently selected supplier
+
+        // Set current date as default for date inputs and payment date
+        function setCurrentDate() {
+            const today = new Date().toISOString().split('T')[0];
+            $('#fromDate').val(today);
+            $('#toDate').val(today);
+            $('#paymentDate').val(today);
+        }
+
+        // Update toggle button text based on state
+        function updateToggleButtonText() {
+            $('#toggle-date-filter').text(showAll ? 'Show Today' : 'Show All');
+        }
+
+        // Initialize date inputs and button text
+        setCurrentDate();
+        updateToggleButtonText();
+
         // Validate date range
         function validateDateRange() {
             const fromDate = $('#fromDate').val();
@@ -293,42 +342,13 @@
         }
 
         // Handle input changes for date validation
-        $('#fromDate, #toDate').on('change', validateDateRange);
-
-        // Handle supplier click
-        $(document).on('click', '.supplier-list', function () {
-            const supplierId = $(this).data('supplier-id');
-            $('.supplier-list').removeClass('selected');
-            $(this).addClass('selected');
-            $('#supplierDetailsCard').show();
-            $('#makePaymentBtn').prop('disabled', false);
-            $('#supplierId').val(supplierId);
-            $('#dateFilterForm')[0].reset(); // Reset date filter
-            $('#fromDate, #toDate').removeClass('is-invalid');
-            $('.invalid-feedback').text('').hide();
-            $('#filterBtn').prop('disabled', false);
-
-            // Fetch supplier transactions
-            fetchTransactions(supplierId, 1);
+        $('#fromDate, #toDate').on('change', function() {
+            validateDateRange();
         });
 
-        // Handle pagination click
-        $(document).on('click', '.page-link', function (e) {
-            e.preventDefault();
-            const page = $(this).data('page');
-            const supplierId = $('.supplier-list.selected').data('supplier-id');
-            if (!supplierId || !page) return;
-
-            fetchTransactions(supplierId, page);
-        });
-
-        // Handle date filter form submission
-        $('#dateFilterForm').on('submit', function (e) {
-            e.preventDefault();
-            if (!validateDateRange()) return;
-
-            const supplierId = $('.supplier-list.selected').data('supplier-id');
-            if (!supplierId) {
+        // Handle toggle date filter button
+        $('#toggle-date-filter').on('click', function() {
+            if (!currentSupplierId) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'No Supplier Selected',
@@ -337,38 +357,116 @@
                 return;
             }
 
-            fetchTransactions(supplierId, 1); // Reset to page 1 on filter
+            showAll = !showAll; // Toggle the state
+            updateToggleButtonText();
+            
+            if (showAll) {
+                // When showing all, clear the date inputs visually but don't submit them
+                $('#fromDate').val('');
+                $('#toDate').val('');
+            } else {
+                // When going back to today, set the dates to today
+                setCurrentDate();
+            }
+            
+            console.log('Toggle clicked: showAll=', showAll);
+            fetchTransactions(currentSupplierId, 1);
         });
 
-        // Handle clear filter button
-        $('#clearFilterBtn').on('click', function () {
-            $('#dateFilterForm')[0].reset();
+        // Handle supplier click
+        $(document).on('click', '.supplier-list', function () {
+            const supplierId = $(this).data('supplier-id');
+            currentSupplierId = supplierId;
+            $('.supplier-list').removeClass('selected');
+            $(this).addClass('selected');
+            $('#supplierDetailsCard').show();
+            $('#makePaymentBtn').prop('disabled', false);
+            $('#supplierId').val(supplierId);
+            
+            // Reset filters to default (today)
+            showAll = false;
+            setCurrentDate();
+            updateToggleButtonText();
             $('#fromDate, #toDate').removeClass('is-invalid');
             $('.invalid-feedback').text('').hide();
             $('#filterBtn').prop('disabled', false);
 
-            const supplierId = $('.supplier-list.selected').data('supplier-id');
-            if (!supplierId) return;
+            console.log('Supplier selected: ID=', supplierId);
+            fetchTransactions(supplierId, 1);
+        });
 
-            fetchTransactions(supplierId, 1); // Reset to page 1
+        // Handle pagination click
+        $(document).on('click', '.page-link', function (e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            if (!currentSupplierId || !page) return;
+
+            console.log('Pagination clicked: Page=', page);
+            fetchTransactions(currentSupplierId, page);
+        });
+
+        // Handle filter button click
+        $('#filterBtn').on('click', function (e) {
+            e.preventDefault();
+            if (!validateDateRange()) return;
+
+            if (!currentSupplierId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Supplier Selected',
+                    text: 'Please select a supplier first.'
+                });
+                return;
+            }
+
+            showAll = false; // Using date filter means we're not showing all
+            updateToggleButtonText();
+            console.log('Filter button clicked: fromDate=', $('#fromDate').val(), 'toDate=', $('#toDate').val());
+            fetchTransactions(currentSupplierId, 1); // Reset to page 1 on filter
+        });
+
+        // Handle clear filter button
+        $('#clearFilterBtn').on('click', function () {
+            setCurrentDate();
+            $('#fromDate, #toDate').removeClass('is-invalid');
+            $('.invalid-feedback').text('').hide();
+            $('#filterBtn').prop('disabled', false);
+
+            if (!currentSupplierId) return;
+
+            showAll = false; // Clearing filter means we're back to today's view
+            updateToggleButtonText();
+            console.log('Clear filter clicked');
+            fetchTransactions(currentSupplierId, 1); // Reset to page 1
         });
 
         // Function to fetch transactions
         function fetchTransactions(supplierId, page) {
             const fromDate = $('#fromDate').val();
             const toDate = $('#toDate').val();
+            
             let url = `/suppliers/${supplierId}/transactions?page=${page}`;
-            if (fromDate || toDate) {
-                url += `&from_date=${fromDate}&to_date=${toDate}`;
+            
+            // Only send date parameters if we're not in "show all" mode
+            if (!showAll) {
+                if (fromDate) url += `&from_date=${encodeURIComponent(fromDate)}`;
+                if (toDate) url += `&to_date=${encodeURIComponent(toDate)}`;
+            } else {
+                url += `&show_all=true`;
             }
 
+            console.log('Fetching transactions: URL=', url);
             $.ajax({
                 url: url,
                 method: 'GET',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
+                beforeSend: function() {
+                    $('#transactionTableBody').html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
+                },
                 success: function (response) {
+                    console.log('Fetch transactions response:', response);
                     if (response.success) {
                         // Update supplier details
                         $('#supplierName').text(response.supplier.name || 'Unknown');
@@ -380,26 +478,30 @@
                         // Update transactions table
                         const tbody = $('#transactionTableBody');
                         tbody.empty();
-                        response.transactions.forEach((transaction, index) => {
-                            const date = transaction.date ? new Date(transaction.date).toLocaleDateString('en-US', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                            }) : '-';
-                            const row = `
-                                <tr>
-                                    <td>${index + 1 + (response.pagination.per_page * (response.pagination.current_page - 1))}</td>
-                                    <td>${date}</td>
-                                    <td>${transaction.bill_number || '-'}</td>
-                                    <td>${transaction.transaction_type || '-'}</td>
-                                    <td>${transaction.transaction_mode || '-'}</td>
-                                    <td>${parseFloat(transaction.debit || 0).toFixed(2)}</td>
-                                    <td>${parseFloat(transaction.credit || 0).toFixed(2)}</td>
-                                    <td>${transaction.notes || '-'}</td>
-                                </tr>
-                            `;
-                            tbody.append(row);
-                        });
+                        if (response.transactions.length > 0) {
+                            response.transactions.forEach((transaction, index) => {
+                                const date = transaction.date ? new Date(transaction.date).toLocaleDateString('en-US', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                }) : '-';
+                                const row = `
+                                    <tr>
+                                        <td>${index + 1 + (response.pagination.per_page * (response.pagination.current_page - 1))}</td>
+                                        <td>${date}</td>
+                                        <td>${transaction.bill_number || '-'}</td>
+                                        <td>${transaction.transaction_type || '-'}</td>
+                                        <td>${transaction.transaction_mode || '-'}</td>
+                                        <td>${parseFloat(transaction.debit || 0).toFixed(2)}</td>
+                                        <td>${parseFloat(transaction.credit || 0).toFixed(2)}</td>
+                                        <td>${transaction.notes || '-'}</td>
+                                    </tr>
+                                `;
+                                tbody.append(row);
+                            });
+                        } else {
+                            tbody.html('<tr><td colspan="8" class="text-center text-muted">No transactions found for the selected period.</td></tr>');
+                        }
 
                         // Update totals with fallback
                         const totals = response.totals || { total_debit: 0, total_credit: 0, balance: 0 };
@@ -444,14 +546,17 @@
                             title: 'Error',
                             text: response.message || 'Failed to fetch supplier transactions.'
                         });
+                        $('#transactionTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error loading transactions.</td></tr>');
                     }
                 },
                 error: function (xhr) {
+                    console.error('Fetch transactions error:', xhr.responseText);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
                         text: xhr.responseJSON?.message || 'Failed to fetch supplier transactions.'
                     });
+                    $('#transactionTableBody').html('<tr><td colspan="8" class="text-center text-danger">Error loading transactions.</td></tr>');
                 }
             });
         }
@@ -459,17 +564,19 @@
         // Handle payment form submission
         $('#paymentForm').on('submit', function (e) {
             e.preventDefault();
-            const supplierId = $('#supplierId').val();
+            if (!currentSupplierId) return;
+
             const formData = {
-                supplier_id: supplierId,
+                supplier_id: currentSupplierId,
                 payment_amount: $('#paymentAmount').val(),
                 date: $('#paymentDate').val(),
                 note: $('#paymentNote').val(),
                 _token: $('meta[name="csrf-token"]').attr('content')
             };
 
+            console.log('Submitting payment:', formData);
             $.ajax({
-                url: `/suppliers/${supplierId}/transactions`,
+                url: `/suppliers/${currentSupplierId}/transactions`,
                 method: 'POST',
                 data: formData,
                 success: function (response) {
@@ -481,7 +588,8 @@
                         });
                         $('#paymentModal').modal('hide');
                         $('#paymentForm')[0].reset();
-                        fetchTransactions(supplierId, 1); // Refresh transactions
+                        setCurrentDate(); // Reset payment date to today
+                        fetchTransactions(currentSupplierId, 1); // Refresh transactions
                     } else {
                         Swal.fire({
                             icon: 'error',
@@ -491,6 +599,7 @@
                     }
                 },
                 error: function (xhr) {
+                    console.error('Payment submission error:', xhr.responseText);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',

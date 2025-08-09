@@ -9,26 +9,46 @@ use App\Models\IncomeType;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class IncomeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $companyId = auth()->user()->company_id;
+        $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
+            ->where('company_id', $companyId);
 
-        $incomes = Income::with(['incomeType', 'createdBy', 'bankAccount'])
-            ->where('company_id', $companyId)
-            ->latest()
-            ->paginate(10);
+        // Filter by current day unless show_all is requested
+        if (!$request->has('show_all') || !$request->input('show_all')) {
+            $query->whereDate('date_time', Carbon::today());
+        }
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('voucher_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('reference_note', 'like', "%{$searchTerm}%")
+                    ->orWhere('narration', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('incomeType', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    });
+            });
+        }
+
+        $incomes = $query->latest()->paginate(10)->appends($request->except('page'));
 
         $incomeTypes = IncomeType::where('company_id', $companyId)->get();
-
         $bankAccounts = BankAccount::where('company_id', $companyId)
             ->where('is_active', 1)
             ->get();
 
-        return view('frontend.pages.incomes.index',
-            compact('incomes', 'incomeTypes', 'bankAccounts'));
+        if ($request->ajax()) {
+            return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'))->render();
+        }
+
+        return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'));
     }
 
     public function store(Request $request)
@@ -129,28 +149,41 @@ class IncomeController extends Controller
         ]);
     }
 
-    public function destroy(Income $income)
-    {
-        $income->delete();
+   public function destroy(Income $income)
+{
+    // ❗ Delete related transaction entry
+    Transaction::where('income_id', $income->id)->delete();
 
-        $page = request()->input('page', 1);
-        $incomes = Income::with(['incomeType', 'createdBy', 'bankAccount'])
-            ->latest()
-            ->paginate(10, ['*'], 'page', $page);
+    // Delete the income entry
+    $income->delete();
 
-        if ($incomes->isEmpty() && $page > 1) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Income deleted successfully',
-                'redirect' => true,
-                'redirectUrl' => route('incomes.index', ['page' => $page - 1])
-            ]);
-        }
+    $page = request()->input('page', 1);
+    $showAll = request()->input('show_all', 0);
+    $companyId = auth()->user()->company_id;
 
+    $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
+        ->where('company_id', $companyId);
+
+    if (!$showAll) {
+        $query->whereDate('date_time', Carbon::today());
+    }
+
+    $incomes = $query->latest()->paginate(10, ['*'], 'page', $page);
+
+    if ($incomes->isEmpty() && $page > 1) {
         return response()->json([
             'success' => true,
             'message' => 'Income deleted successfully',
-            'incomes' => $incomes->items()
+            'redirect' => true,
+            'redirectUrl' => route('incomes.index', ['page' => $page - 1, 'show_all' => $showAll])
         ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Income deleted successfully',
+        'incomes' => $incomes->items()
+    ]);
+}
+
 }

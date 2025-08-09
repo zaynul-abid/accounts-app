@@ -11,30 +11,52 @@ use App\Models\SupplierTransaction;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $companyId = auth()->user()->company_id;
+        $query = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
+            ->where('company_id', $companyId);
 
-        $expenses = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
-            ->where('company_id', $companyId)
-            ->latest()
-            ->paginate(10);
+        // Filter by current day unless show_all is requested
+        if (!$request->has('show_all') || !$request->input('show_all')) {
+            $query->whereDate('date_time', Carbon::today());
+        }
+
+        // Apply search filter if provided
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('voucher_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('reference_note', 'like', "%{$searchTerm}%")
+                    ->orWhere('narration', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('expenseType', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    })
+                    ->orWhereHas('supplier', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    });
+            });
+        }
+
+        $expenses = $query->latest()->paginate(10)->appends($request->except('page'));
 
         $expenseTypes = ExpenseType::where('company_id', $companyId)->get();
-
         $bankAccounts = BankAccount::where('company_id', $companyId)
             ->where('is_active', 1)
             ->get();
-
         $suppliers = Supplier::where('company_id', $companyId)
             ->where('status', 1)
             ->get();
 
-        return view('frontend.pages.expenses.index',
-            compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'));
+        if ($request->ajax()) {
+            return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'))->render();
+        }
+
+        return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -125,6 +147,7 @@ class ExpenseController extends Controller
                 : redirect()->back()->withErrors(['error' => 'Failed to record expense or transaction']);
         }
     }
+
     public function edit(Expense $expense)
     {
         return response()->json([
@@ -194,31 +217,44 @@ class ExpenseController extends Controller
         ]);
     }
 
-    public function destroy(Expense $expense)
-    {
-        // Delete related supplier transaction
-        SupplierTransaction::where('expense_id', $expense->id)->delete();
+   public function destroy(Expense $expense)
+{
+    // Delete related supplier transaction
+    SupplierTransaction::where('expense_id', $expense->id)->delete();
 
-        $expense->delete();
+    // ❗ Delete related transaction entry
+    Transaction::where('expense_id', $expense->id)->delete();
 
-        $page = request()->input('page', 1);
-        $expenses = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
-            ->latest()
-            ->paginate(10, ['*'], 'page', $page);
+    // Delete the expense
+    $expense->delete();
 
-        if ($expenses->isEmpty() && $page > 1) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Expense deleted successfully',
-                'redirect' => true,
-                'redirectUrl' => route('expenses.index', ['page' => $page - 1])
-            ]);
-        }
+    $page = request()->input('page', 1);
+    $showAll = request()->input('show_all', 0);
+    $companyId = auth()->user()->company_id;
 
+    $query = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
+        ->where('company_id', $companyId);
+
+    if (!$showAll) {
+        $query->whereDate('date_time', Carbon::today());
+    }
+
+    $expenses = $query->latest()->paginate(10, ['*'], 'page', $page);
+
+    if ($expenses->isEmpty() && $page > 1) {
         return response()->json([
             'success' => true,
             'message' => 'Expense deleted successfully',
-            'expenses' => $expenses->items()
+            'redirect' => true,
+            'redirectUrl' => route('expenses.index', ['page' => $page - 1, 'show_all' => $showAll])
         ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Expense deleted successfully',
+        'expenses' => $expenses->items()
+    ]);
+}
+
 }

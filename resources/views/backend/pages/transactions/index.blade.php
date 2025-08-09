@@ -6,6 +6,54 @@
     <title>Transactions</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .filter-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            gap: 1rem;
+        }
+        .filter-controls {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .filter-container {
+                flex-wrap: nowrap;
+                gap: 0.75rem;
+            }
+            .filter-controls {
+                gap: 0.4rem;
+            }
+            .filter-controls input,
+            .filter-controls button {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+            .filter-controls input[type="date"] {
+                width: 120px;
+            }
+        }
+        @media (max-width: 576px) {
+            .filter-container {
+                gap: 0.5rem;
+            }
+            .filter-controls {
+                gap: 0.3rem;
+            }
+            .filter-controls input,
+            .filter-controls button {
+                font-size: 0.65rem;
+                padding: 0.2rem 0.4rem;
+            }
+            .filter-controls input[type="date"] {
+                width: 100px;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased">
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -21,18 +69,22 @@
     <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="p-5">
             <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Filter Transactions</h2>
-            <form id="filterForm" action="{{ route('transactions.index') }}" method="GET" class="space-y-4 sm:space-y-0 sm:flex sm:space-x-4">
+            <form id="filterForm" action="{{ route('transactions.index') }}" method="GET" class="filter-container">
                 <div class="flex-1">
                     <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">From</label>
-                    <input type="date" name="start_date" id="start_date" value="{{ $startDate }}"
+                    <input type="date" name="start_date" id="start_date" value="{{ $startDate ?? \Carbon\Carbon::today('Asia/Kolkata')->format('Y-m-d') }}"
                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2 px-3 border">
                 </div>
                 <div class="flex-1">
                     <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">To</label>
-                    <input type="date" name="end_date" id="end_date" value="{{ $endDate }}"
+                    <input type="date" name="end_date" id="end_date" value="{{ $endDate ?? \Carbon\Carbon::today('Asia/Kolkata')->format('Y-m-d') }}"
                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-2 px-3 border">
                 </div>
-                <div class="sm:self-end flex space-x-2">
+                <div class="filter-controls sm:self-end flex space-x-2">
+                    <button type="button" id="toggle-date-filter"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium">
+                        Show All
+                    </button>
                     <button type="submit" id="applyFilters"
                             class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center">
                         <span class="loading-text">Apply</span>
@@ -202,8 +254,11 @@
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="overflow-y-auto flex-1">
-                <table class="min-w-full divide-y divide-gray-200">
+            <div class="overflow-y-auto flex-1 relative" id="transactionsTableContainer">
+                <div id="transactionsLoadingOverlay" class="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10 hidden">
+                    <span class="text-indigo-600"><i class="fas fa-spinner fa-spin fa-2x"></i></span>
+                </div>
+                <table class="min-w-full divide-y divide-gray-200 transition-opacity duration-200" id="transactionsTable">
                     <thead class="bg-gray-50 sticky top-0">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
@@ -217,6 +272,7 @@
                     <!-- Transactions will be loaded here via AJAX -->
                     </tbody>
                 </table>
+                <div id="transactionsPagination" class="flex justify-center items-center gap-2 py-3"></div>
             </div>
             <div class="border-t border-gray-200 p-4 bg-gray-50">
                 <div class="flex justify-between items-center">
@@ -231,7 +287,9 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        console.log('jQuery version:', $.fn.jquery); // Debug jQuery loading
+        console.log('jQuery version:', $.fn.jquery);
+
+        let isTodayFilter = true; // Track toggle state (true = Show Today, false = Show All)
 
         // Store the current filter state
         let currentFilters = {
@@ -240,6 +298,40 @@
             selectedType: null,
             selectedValue: null
         };
+
+        // Set current date as default for start and end date
+        function setCurrentDate() {
+            const today = new Date().toISOString().split('T')[0];
+            $('#start_date').val(today);
+            $('#end_date').val(today);
+            currentFilters.start_date = today;
+            currentFilters.end_date = today;
+        }
+
+        // Update toggle button text based on state
+        function updateToggleButtonText() {
+            $('#toggle-date-filter').text(isTodayFilter ? 'Show All' : 'Show Today');
+        }
+
+        // Set initial date to today and update button text
+        setCurrentDate();
+        updateToggleButtonText();
+
+        // Toggle date filter button
+        $('#toggle-date-filter').on('click', function() {
+            if (isTodayFilter) {
+                $('#start_date').val('');
+                $('#end_date').val('');
+                currentFilters.start_date = '';
+                currentFilters.end_date = '';
+                isTodayFilter = false;
+            } else {
+                setCurrentDate();
+                isTodayFilter = true;
+            }
+            updateToggleButtonText();
+            $('#filterForm').submit();
+        });
 
         // Apply filters form submission (AJAX)
         $('#filterForm').on('submit', function(e) {
@@ -253,7 +345,7 @@
                 type: 'GET',
                 data: formData,
                 success: function(response) {
-                    console.log('Filter response:', response); // Debug response
+                    console.log('Filter response:', response);
                     updateBalances(response);
                     currentFilters.start_date = $('#start_date').val();
                     currentFilters.end_date = $('#end_date').val();
@@ -275,6 +367,10 @@
         $('#clearFilters').on('click', function() {
             $('#start_date').val('');
             $('#end_date').val('');
+            currentFilters.start_date = '';
+            currentFilters.end_date = '';
+            isTodayFilter = false;
+            updateToggleButtonText();
             $('#filterForm').submit();
         });
 
@@ -291,7 +387,7 @@
         // Modal close button
         $('.modal-close-button').on('click', function(e) {
             e.stopPropagation();
-            console.log('closeModal called'); // Debug close button
+            console.log('closeModal called');
             closeModal();
         });
 
@@ -310,9 +406,20 @@
         });
 
         // Function to load transactions via AJAX
-        function loadTransactions(type, value) {
+        // Pagination state for modal
+        let modalPagination = {
+            page: 1,
+            per_page: 10
+        };
+
+        function loadTransactions(type, value, page = 1) {
             const startDate = currentFilters.start_date;
             const endDate = currentFilters.end_date;
+            modalPagination.page = page;
+
+            // Fade out table and show loading overlay
+            $('#transactionsTable').css('opacity', 0.5);
+            $('#transactionsLoadingOverlay').removeClass('hidden');
 
             $.ajax({
                 url: "{{ route('transactions.index') }}",
@@ -321,10 +428,12 @@
                     [type]: value,
                     start_date: startDate,
                     end_date: endDate,
-                    ajax: true
+                    ajax: true,
+                    page: modalPagination.page,
+                    per_page: modalPagination.per_page
                 },
                 beforeSend: function() {
-                    $('#transactionsTableBody').html('<tr><td colspan="5" class="px-4 py-4 text-center">Loading...</td></tr>');
+                    $('#transactionsPagination').html('');
                 },
                 success: function(response) {
                     if (response.success) {
@@ -370,14 +479,50 @@
                             `;
                         }
                         $('#transactionsTableBody').html(transactionsHtml);
+                        renderTransactionsPagination(response.pagination);
+                        // Fade in table and hide loading overlay
+                        $('#transactionsTable').css('opacity', 1);
+                        $('#transactionsLoadingOverlay').addClass('hidden');
+                        // Scroll modal content to top
+                        $('#transactionsTableContainer').animate({ scrollTop: 0 }, 200);
                         openModal();
                     } else {
                         alert('Failed to load transactions.');
+                        $('#transactionsTable').css('opacity', 1);
+                        $('#transactionsLoadingOverlay').addClass('hidden');
                     }
                 },
                 error: function(xhr) {
                     console.error('Transaction load error:', xhr.responseText);
                     $('#transactionsTableBody').html('<tr><td colspan="5" class="px-4 py-4 text-center text-sm text-red-600">Error loading transactions</td></tr>');
+                    $('#transactionsTable').css('opacity', 1);
+                    $('#transactionsLoadingOverlay').addClass('hidden');
+                }
+            });
+        }
+
+        function renderTransactionsPagination(pagination) {
+            if (!pagination || pagination.last_page <= 1) {
+                $('#transactionsPagination').html('');
+                return;
+            }
+            let html = '';
+            const prevDisabled = pagination.current_page === 1 ? 'disabled opacity-50' : '';
+            const nextDisabled = pagination.current_page === pagination.last_page ? 'disabled opacity-50' : '';
+            html += `<button class="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" id="transactionsPrevPage" ${prevDisabled}>Prev</button>`;
+            html += `<span class="mx-2 text-sm">Page ${pagination.current_page} of ${pagination.last_page}</span>`;
+            html += `<button class="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" id="transactionsNextPage" ${nextDisabled}>Next</button>`;
+            $('#transactionsPagination').html(html);
+
+            // Event handlers
+            $('#transactionsPrevPage').off('click').on('click', function() {
+                if (pagination.current_page > 1) {
+                    loadTransactions(currentFilters.selectedType, currentFilters.selectedValue, pagination.current_page - 1);
+                }
+            });
+            $('#transactionsNextPage').off('click').on('click', function() {
+                if (pagination.current_page < pagination.last_page) {
+                    loadTransactions(currentFilters.selectedType, currentFilters.selectedValue, pagination.current_page + 1);
                 }
             });
         }
@@ -408,7 +553,7 @@
 
         // Update balances dynamically
         function updateBalances(data) {
-            console.log('Updating balances with:', data); // Debug balances
+            console.log('Updating balances with:', data);
             $('.payment-method').each(function() {
                 const $card = $(this);
                 const type = $card.find('.transaction-link').data('type');
@@ -429,13 +574,16 @@
                     balance = data.bankBalances[value]?.balance || 0;
                 }
 
-                console.log(`Updating ${type} ${value} balance to: ${balance}`); // Debug each card
+                console.log(`Updating ${type} ${value} balance to: ${balance}`);
                 $card.find('.font-semibold')
                     .text(formatCurrency(balance))
                     .removeClass('text-green-600 text-red-600')
                     .addClass(balance >= 0 ? 'text-green-600' : 'text-red-600');
             });
         }
+
+        // Initial fetch with current date
+        $('#filterForm').submit();
     });
 </script>
 </body>
