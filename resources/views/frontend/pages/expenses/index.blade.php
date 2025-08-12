@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f8f9fa;
@@ -27,6 +28,9 @@
             padding: 0.75rem 1rem;
             font-weight: 600;
             border-radius: 1rem 1rem 0 0;
+        }
+        .card-header .d-flex > * {
+            flex-shrink: 1;
         }
         .form-label {
             font-weight: 500;
@@ -79,16 +83,27 @@
             border-color: #17a2b8;
         }
         .form-control, .form-select {
-            padding: 0.4rem 0.8rem;
+            padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
-            height: 2.2rem;
+            height: 2rem;
             border-radius: 0.5rem;
             border: 1px solid #ced4da;
         }
         .input-group .btn {
-            padding: 0.4rem 0.8rem;
+            padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
             border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .expense-type-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .expense-type-container .form-select {
+            flex-grow: 1;
+        }
+        .expense-type-container .btn-add {
+            flex-shrink: 0;
         }
         .form-check {
             margin-bottom: 0.4rem;
@@ -107,7 +122,7 @@
             background: #28a745;
             color: white;
             border: none;
-            padding: 0.4rem 0.8rem;
+            padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
             border-radius: 0.5rem;
             transition: background 0.3s ease;
@@ -151,8 +166,8 @@
             display: flex;
             gap: 0.5rem;
         }
-        .input-group-sm {
-            max-width: 200px;
+        .search-input-group {
+            width: 200px !important;
         }
         .input-group-sm .form-control {
             font-size: 0.8rem;
@@ -175,18 +190,9 @@
             background-color: #007bff;
             border-color: #007bff;
         }
-        @media (max-width: 767px) {
-            .input-group-sm {
-                max-width: 150px;
-            }
-            .input-group-sm .form-control {
-                font-size: 0.75rem;
-                height: 1.6rem;
-                padding: 0.2rem 0.5rem;
-            }
-            .input-group-sm .btn {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.75rem;
+        @media (max-width: 768px) {
+            .search-input-group {
+                width: 150px !important;
             }
             .container {
                 padding: 0.5rem;
@@ -205,7 +211,7 @@
             }
             .form-control, .form-select {
                 font-size: 0.8rem;
-                height: 2rem;
+                height: 1.8rem;
             }
             .btn-sm {
                 padding: 0.2rem 0.4rem;
@@ -237,10 +243,27 @@
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
             }
+            .expense-type-container {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .expense-type-container .form-select {
+                flex-grow: 1;
+                font-size: 0.8rem;
+                height: 1.8rem;
+            }
+            .expense-type-container .btn-add {
+                flex-shrink: 0;
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+                border-radius: 0.5rem;
+            }
         }
         @media (max-width: 576px) {
-            .input-group-sm {
-                max-width: 120px;
+            .search-input-group {
+                width: 120px !important;
             }
             .col-md-4 {
                 flex: 0 0 100%;
@@ -255,6 +278,23 @@
             }
             .modal-content {
                 padding: 0.5rem;
+            }
+            .expense-type-container {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 0.3rem;
+            }
+            .expense-type-container .form-select {
+                flex-grow: 1;
+                font-size: 0.75rem;
+                height: 1.8rem;
+            }
+            .expense-type-container .btn-add {
+                flex-shrink: 0;
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+                border-radius: 0.5rem;
             }
         }
     </style>
@@ -288,10 +328,10 @@
                     </div>
                     <div class="col-md-4">
                         <label for="expense_type_id" class="form-label required-field">Expense Type</label>
-                        <div class="input-group">
+                        <div class="expense-type-container">
                             <select class="form-select" id="expense_type_id" name="expense_type_id" required>
                                 <option value="">Select Expense Type</option>
-                                @foreach($expenseTypes as $type)
+                                @foreach($expenseTypes->sortBy('name') as $type)
                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
                                 @endforeach
                             </select>
@@ -308,7 +348,7 @@
                     <div class="col-md-4">
                         <label class="form-label required-field">Payment Mode</label>
                         <div class="d-flex gap-3 flex-wrap">
-                                    @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
+                            @foreach(['cash', 'bank', 'credit', 'touch&go', 'boost', 'duitinow'] as $mode)
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="payment_mode" id="{{ $mode }}" value="{{ $mode }}" {{ $mode == 'cash' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="{{ $mode }}">{{ ucfirst(str_replace('&', ' & ', $mode)) }}</label>
@@ -381,13 +421,12 @@
             <h6 class="mb-0">Expense Records</h6>
             <div class="d-flex gap-2 align-items-center">
                 <button class="btn btn-outline-primary btn-sm" id="showAllButton">Show All</button>
-                <div class="input-group input-group-sm w-md-15">
+                <div class="input-group input-group-sm search-input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                     <button class="btn btn-outline-secondary" type="button" id="searchButton">
                         <i class="fas fa-search"></i>
                     </button>
                 </div>
-
             </div>
         </div>
         <div class="card-body">
@@ -421,12 +460,12 @@
                             <td>{{ $expense->reference_note ?? 'N/A' }}</td>
                             <td data-amount="{{ $expense->payment_amount }}">{{ number_format($expense->payment_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ 
-                                    $expense->payment_mode == 'cash' ? 'bg-success' : 
+                                <span class="badge {{
+                                    $expense->payment_mode == 'cash' ? 'bg-success' :
                                     ($expense->payment_mode == 'bank' ? 'bg-primary' :
-                                    ($expense->payment_mode == 'credit' ? 'bg-info' : 
-                                    ($expense->payment_mode == 'touch&go' ? 'bg-warning' : 
-                                    ($expense->payment_mode == 'boost' ? 'bg-dark' : 'bg-danger')))) 
+                                    ($expense->payment_mode == 'credit' ? 'bg-info' :
+                                    ($expense->payment_mode == 'touch&go' ? 'bg-warning' :
+                                    ($expense->payment_mode == 'boost' ? 'bg-dark' : 'bg-danger'))))
                                     }}">
                                     {{ ucfirst(str_replace('&', ' & ', $expense->payment_mode)) }}
                                 </span>
@@ -647,9 +686,21 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function () {
         console.log("✅ JS is working and jQuery is ready!");
+
+        // Initialize Select2 for expense type
+        $('#expense_type_id').select2({
+            placeholder: "Select Expense Type",
+            allowClear: true,
+            width: '100%'
+        });
+
+        $('#expense_type_id').on('select2:open', function () {
+            document.querySelector('.select2-search__field').focus();
+        });
 
         // Track show all state
         let showAll = false;
@@ -998,6 +1049,7 @@
                     editingExpenseId = null;
                     setCurrentDateTime();
                     $('input[name="payment_mode"][value="cash"]').prop('checked', true).trigger('change');
+                    $('#expense_type_id').val('').trigger('change');
 
                     Swal.fire({
                         title: 'Success!',

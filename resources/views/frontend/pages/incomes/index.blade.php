@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <style>
         body {
             background-color: #f8f9fa;
@@ -30,11 +32,11 @@
             padding: 0.75rem 1rem;
             font-weight: 600;
             border-radius: 1rem 1rem 0 0;
-            min-width: 0; /* Prevent overflow */
+            min-width: 0;
         }
 
         .card-header .d-flex > * {
-            flex-shrink: 1; /* Allow elements to shrink proportionally */
+            flex-shrink: 1;
         }
 
         .form-label {
@@ -110,6 +112,20 @@
             padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
             border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .income-type-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .income-type-container .form-select {
+            flex-grow: 1;
+        }
+
+        .income-type-container .btn-add {
+            flex-shrink: 0;
         }
 
         .form-check {
@@ -192,7 +208,7 @@
         }
 
         .search-input-group {
-            width: 200px !important; /* Fixed width for consistency */
+            width: 200px !important;
         }
 
         .btn-narration-mobile {
@@ -272,7 +288,24 @@
                 font-size: 0.7rem;
             }
             .search-input-group {
-                width: 150px !important; /* Smaller width for tablets */
+                width: 150px !important;
+            }
+            .income-type-container {
+                display: flex;
+                flex-direction: row; /* Keep row layout for tablet */
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .income-type-container .form-select {
+                flex-grow: 1;
+                font-size: 0.8rem;
+                height: 1.8rem;
+            }
+            .income-type-container .btn-add {
+                flex-shrink: 0;
+                padding: 0.3rem 0.6rem; /* Slightly smaller padding for tablet */
+                font-size: 0.8rem;
+                border-radius: 0.5rem;
             }
             .input-group .form-control {
                 font-size: 0.75rem;
@@ -328,7 +361,7 @@
                 -webkit-overflow-scrolling: touch;
             }
             .search-input-group {
-                width: 120px !important; /* Smaller width for mobile */
+                width: 120px !important;
             }
             .input-group .form-control {
                 font-size: 0.7rem;
@@ -344,6 +377,23 @@
             }
             .narration-column {
                 display: none;
+            }
+            .income-type-container {
+                display: flex;
+                flex-direction: row; /* Keep row layout for mobile */
+                align-items: center;
+                gap: 0.3rem; /* Slightly smaller gap for mobile */
+            }
+            .income-type-container .form-select {
+                flex-grow: 1;
+                font-size: 0.75rem;
+                height: 1.8rem;
+            }
+            .income-type-container .btn-add {
+                flex-shrink: 0;
+                padding: 0.25rem 0.5rem; /* Compact padding for mobile */
+                font-size: 0.75rem;
+                border-radius: 0.5rem;
             }
         }
     </style>
@@ -377,10 +427,10 @@
                     </div>
                     <div class="col-12 col-md-4">
                         <label for="income_type_id" class="form-label required-field">Income Type</label>
-                        <div class="input-group">
+                        <div class="income-type-container">
                             <select class="form-select" id="income_type_id" name="income_type_id" required>
                                 <option value="">Select Income Type</option>
-                                @foreach($incomeTypes as $type)
+                                @foreach($incomeTypes->sortBy('name') as $type)
                                     <option value="{{ $type->id }}">{{ $type->name }}</option>
                                 @endforeach
                             </select>
@@ -485,11 +535,11 @@
                             <td>{{ $income->incomeType->name }}</td>
                             <td data-amount="{{ $income->receipt_amount }}">{{ number_format($income->receipt_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ 
-                                    $income->receipt_mode == 'cash' ? 'bg-success' : 
-                                    ($income->receipt_mode == 'bank' ? 'bg-primary' : 
-                                    ($income->receipt_mode == 'credit' ? 'bg-info' : 
-                                    ($income->receipt_mode == 'touch&go' ? 'bg-warning' : 
+                                <span class="badge {{
+                                    $income->receipt_mode == 'cash' ? 'bg-success' :
+                                    ($income->receipt_mode == 'bank' ? 'bg-primary' :
+                                    ($income->receipt_mode == 'credit' ? 'bg-info' :
+                                    ($income->receipt_mode == 'touch&go' ? 'bg-warning' :
                                     ($income->receipt_mode == 'boost' ? 'bg-dark' : 'bg-danger')))) }}">
                                     {{ ucfirst(str_replace('&', ' & ', $income->receipt_mode)) }}
                                 </span>
@@ -661,14 +711,23 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
     $(document).ready(function () {
         console.log("✅ JS is working and jQuery is ready!");
+        $('#income_type_id').select2({
+            placeholder: "Select Income Type",
+            allowClear: true,
+            width: '100%'
+        });
 
-        // Track show all state
+        $('#income_type_id').on('select2:open', function () {
+            document.querySelector('.select2-search__field').focus();
+        });
+
         let showAll = false;
 
-        // Calculate and update total amount
         function updateTotalAmount() {
             let total = 0;
             $('#incomeTable tbody tr:visible').each(function() {
@@ -678,7 +737,6 @@
             $('#totalAmount').text(total.toFixed(2));
         }
 
-        // Set current date
         function setCurrentDateTime() {
             const now = new Date();
             const formattedDate = now.toISOString().slice(0, 10);
@@ -686,22 +744,18 @@
         }
         setCurrentDateTime();
 
-        // Show/hide fields based on receipt mode
         function updateReceiptModeFields() {
             const mode = $('input[name="receipt_mode"]:checked').val();
             $('#bankAccountField').toggle(mode === 'bank');
             if (mode !== 'bank') $('#bank_account_id').val('');
         }
 
-        // Initial call to set default state
         updateReceiptModeFields();
 
-        // Bind change event
         $('input[name="receipt_mode"]').change(function() {
             updateReceiptModeFields();
         });
 
-        // Search functionality
         $('#searchButton').click(function() {
             const searchTerm = $('#searchInput').val().toLowerCase();
             $('#incomeTable tbody tr').each(function(index) {
@@ -714,31 +768,26 @@
             updateTotalAmount();
         });
 
-        // Clear search on input clear
         $('#searchInput').on('input', function() {
             if ($(this).val() === '') {
                 loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
             }
         });
 
-        // Show All button toggle
         $('#showAllButton').click(function() {
             showAll = !showAll;
             $(this).text(showAll ? 'Show Today' : 'Show All');
             loadIncomes(1, showAll);
         });
 
-        // Narration modal handling
         $('#narrationModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             const narration = button.data('narration');
             $('#narrationContent').text(narration);
         });
 
-        // Initial total amount calculation
         updateTotalAmount();
 
-        // Income Type Modal handling
         $('#incomeTypeModal').on('show.bs.modal', function (event) {
             $('#incomeTypeForm')[0].reset();
             $('#formError').addClass('d-none').text('');
@@ -746,7 +795,6 @@
             $('#modalTitle').text('Add New Income Type');
         });
 
-        // Income Type Form submission
         $('#incomeTypeForm').on('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
@@ -807,7 +855,6 @@
             });
         });
 
-        // Bank Account Modal handling
         $('#bankAccountModal').on('show.bs.modal', function (event) {
             $('#bankAccountForm')[0].reset();
             $('#bankFormError').addClass('d-none').text('');
@@ -815,7 +862,6 @@
             $('#bankModalTitle').text('Add New Bank Account');
         });
 
-        // Bank Account Form submission
         $('#bankAccountForm').on('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
@@ -879,14 +925,12 @@
             });
         });
 
-        // Clear forms when modals are closed
         $('#incomeTypeModal, #bankAccountModal, #narrationModal').on('hidden.bs.modal', function () {
             $(this).find('form')[0]?.reset();
             $(this).find('.alert').addClass('d-none').text('');
             $(this).find('.is-invalid').removeClass('is-invalid');
         });
 
-        // Income Form submission
         let isEditing = false;
         let editingIncomeId = null;
 
@@ -925,7 +969,6 @@
                         showConfirmButton: false
                     });
 
-                    // Reload the current page of incomes
                     loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
                 },
                 error: function(xhr) {
@@ -945,7 +988,6 @@
             });
         });
 
-        // Edit button click
         $(document).on('click', '.edit-income', function() {
             const incomeId = $(this).data('income-id');
             $.ajax({
@@ -978,7 +1020,6 @@
             });
         });
 
-        // Delete button click
         $(document).on('click', '.delete-income', function() {
             const incomeId = $(this).data('income-id');
             const $row = $(this).closest('tr');
@@ -1027,7 +1068,6 @@
             });
         });
 
-        // Function to load incomes via AJAX
         function loadIncomes(page, showAll) {
             const searchTerm = $('#searchInput').val();
             $.ajax({
@@ -1035,13 +1075,9 @@
                 method: 'GET',
                 data: { page: page, search: searchTerm, show_all: showAll ? 1 : 0 },
                 success: function(response) {
-                    // Update table body
                     $('#incomeTableBody').html($(response).find('#incomeTableBody').html());
-                    // Update pagination
                     $('.pagination-container').html($(response).find('.pagination-container').html());
-                    // Update total amount
                     updateTotalAmount();
-                    // Re-attach pagination event listeners
                     attachPaginationListeners();
                 },
                 error: function(xhr) {
@@ -1054,7 +1090,6 @@
             });
         }
 
-        // Function to attach pagination event listeners
         function attachPaginationListeners() {
             $('.pagination .page-link').off('click').on('click', function(e) {
                 e.preventDefault();
@@ -1065,14 +1100,12 @@
             });
         }
 
-        // Initial attachment of pagination listeners
         attachPaginationListeners();
 
-        // Add new income to table
         function addIncomeToTable(income) {
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
             const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' :
-                income.receipt_mode === 'bank' ? 'bg-primary' :
+                income.recept_mode === 'bank' ? 'bg-primary' :
                     income.receipt_mode === 'credit' ? 'bg-info' :
                         income.receipt_mode === 'touch&go' ? 'bg-warning' :
                             income.receipt_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
@@ -1112,7 +1145,6 @@
             });
         }
 
-        // Update income in table
         function updateIncomeInTable(income) {
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
             const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' :

@@ -44,12 +44,18 @@ class ExpenseController extends Controller
 
         $expenses = $query->latest()->paginate(10)->appends($request->except('page'));
 
-        $expenseTypes = ExpenseType::where('company_id', $companyId)->get();
+        $expenseTypes = ExpenseType::where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
         $bankAccounts = BankAccount::where('company_id', $companyId)
             ->where('is_active', 1)
+            ->orderBy('account_name', 'asc')
             ->get();
+
         $suppliers = Supplier::where('company_id', $companyId)
             ->where('status', 1)
+            ->orderBy('name', 'asc')
             ->get();
 
         if ($request->ajax()) {

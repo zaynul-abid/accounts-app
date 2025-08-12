@@ -16,6 +16,7 @@ class IncomeController extends Controller
     public function index(Request $request)
     {
         $companyId = auth()->user()->company_id;
+
         $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
             ->where('company_id', $companyId);
 
@@ -39,9 +40,15 @@ class IncomeController extends Controller
 
         $incomes = $query->latest()->paginate(10)->appends($request->except('page'));
 
-        $incomeTypes = IncomeType::where('company_id', $companyId)->get();
+        // Sort income types alphabetically
+        $incomeTypes = IncomeType::where('company_id', $companyId)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        // Sort bank accounts alphabetically
         $bankAccounts = BankAccount::where('company_id', $companyId)
             ->where('is_active', 1)
+            ->orderBy('account_name', 'asc')
             ->get();
 
         if ($request->ajax()) {
@@ -50,6 +57,7 @@ class IncomeController extends Controller
 
         return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'));
     }
+
 
     public function store(Request $request)
     {
