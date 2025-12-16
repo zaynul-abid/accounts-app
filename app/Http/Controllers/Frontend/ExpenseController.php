@@ -21,8 +21,14 @@ class ExpenseController extends Controller
         $query = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
             ->where('company_id', $companyId);
 
-        // Filter by current day unless show_all is requested
-        if (!$request->has('show_all') || !$request->input('show_all')) {
+        // Apply date range filter if provided
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $end = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('date_time', [$start, $end]);
+        }
+        // Otherwise, apply default today filter unless show_all is requested
+        elseif (!$request->has('show_all') || !$request->input('show_all')) {
             $query->whereDate('date_time', Carbon::today());
         }
 
@@ -42,6 +48,10 @@ class ExpenseController extends Controller
             });
         }
 
+        // Calculate total amount for all matching records
+        $totalAmount = $query->sum('payment_amount');
+
+        // Paginate the results
         $expenses = $query->latest()->paginate(10)->appends($request->except('page'));
 
         $expenseTypes = ExpenseType::where('company_id', $companyId)
@@ -59,10 +69,13 @@ class ExpenseController extends Controller
             ->get();
 
         if ($request->ajax()) {
-            return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'))->render();
+            return response()->json([
+                'html' => view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers', 'totalAmount'))->render(),
+                'totalAmount' => number_format($totalAmount, 2),
+            ]);
         }
 
-        return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers'));
+        return view('frontend.pages.expenses.index', compact('expenses', 'expenseTypes', 'bankAccounts', 'suppliers', 'totalAmount'));
     }
 
     public function store(Request $request)
@@ -161,34 +174,37 @@ class ExpenseController extends Controller
         ]);
     }
 
-    public function update(Request $request, Expense $expense)
-    {
-        $validated = $request->validate([
-            'expense_type_id' => 'required|exists:expense_types,id',
-            'voucher_number' => 'required|string|max:255',
-            'reference_note' => 'nullable|string|max:255',
-            'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'date_time' => 'required|date',
-            'payment_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
-            'payment_amount' => 'required|numeric|min:0',
-            'narration' => 'nullable|string',
-        ]);
+  public function update(Request $request, Expense $expense)
+{
+    $validated = $request->validate([
+        'expense_type_id' => 'required|exists:expense_types,id',
+        'voucher_number' => 'required|string|max:255',
+        'reference_note' => 'nullable|string|max:255',
+        'bank_account_id' => 'required_if:payment_mode,bank|exists:bank_accounts,id|nullable',
+        'supplier_id' => 'nullable|exists:suppliers,id',
+        'date_time' => 'required|date',
+        'payment_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
+        'payment_amount' => 'required|numeric|min:0',
+        'narration' => 'nullable|string',
+    ]);
 
-        // Update expense
+    DB::beginTransaction();
+
+    try {
+
+        // 1. Update expense
         $expense->update($validated);
 
-        // Update or create supplier transaction if supplier is selected
+        // 2. Update or create supplier transaction
         if ($validated['supplier_id']) {
-            $transactionType = ($validated['payment_mode'] === 'credit') ? 'purchase' : 'payment';
-            $amountField = ($validated['payment_mode'] === 'credit') ? 'credit' : 'debit';
+            $transactionType = $validated['payment_mode'] === 'credit' ? 'purchase' : 'payment';
+            $amountField = $validated['payment_mode'] === 'credit' ? 'credit' : 'debit';
 
-            $transaction = SupplierTransaction::where('expense_id', $expense->id)
-                ->where('supplier_id', $validated['supplier_id'])
-                ->first();
+            $supplierTx = SupplierTransaction::where('expense_id', $expense->id)->first();
 
-            if ($transaction) {
-                $transaction->update([
+            if ($supplierTx) {
+                $supplierTx->update([
+                    'supplier_id' => $validated['supplier_id'],
                     'date' => $validated['date_time'],
                     'bill_number' => $validated['voucher_number'],
                     'transaction_mode' => $expense->expenseType->name,
@@ -212,55 +228,131 @@ class ExpenseController extends Controller
                 ]);
             }
         } else {
-            // If supplier_id is removed, delete related transaction
+            // If supplier removed
             SupplierTransaction::where('expense_id', $expense->id)->delete();
+        }
+
+        // 3. Update the transaction table
+        $transaction = Transaction::where('expense_id', $expense->id)->first();
+
+        if ($transaction) {
+            $transaction->update([
+                'date' => \Carbon\Carbon::parse($validated['date_time'])->toDateString(),
+                'transaction_type' => $expense->expenseType->name,
+                'payment_mode' => $validated['payment_mode'],
+                'bank_id' => $validated['bank_account_id'],
+                'debit' => 0,
+                'credit' => $validated['payment_amount'],
+            ]);
+        } else {
+            // Create new if missing
+            Transaction::create([
+                'company_id' => $expense->company_id,
+                'date' => \Carbon\Carbon::parse($validated['date_time'])->toDateString(),
+                'transaction_mode' => 'expense',
+                'income_id' => null,
+                'expense_id' => $expense->id,
+                'transaction_type' => $expense->expenseType->name,
+                'payment_mode' => $validated['payment_mode'],
+                'bank_id' => $validated['bank_account_id'],
+                'debit' => 0,
+                'credit' => $validated['payment_amount'],
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Expense and related transactions updated successfully',
+            'expense' => $expense->load('expenseType', 'createdBy', 'bankAccount', 'supplier')
+        ]);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Update failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+    public function destroy(Expense $expense)
+    {
+        // Delete related supplier transaction
+        SupplierTransaction::where('expense_id', $expense->id)->delete();
+
+        // Delete related transaction entry
+        Transaction::where('expense_id', $expense->id)->delete();
+
+        // Delete the expense
+        $expense->delete();
+
+        $page = request()->input('page', 1);
+        $showAll = request()->input('show_all', 0);
+        $searchTerm = request()->input('search');
+        $startDate = request()->input('start_date');
+        $endDate = request()->input('end_date');
+        $companyId = auth()->user()->company_id;
+
+        $query = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
+            ->where('company_id', $companyId);
+
+        // Apply date range filter if provided
+        if ($startDate && $endDate) {
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+            $query->whereBetween('date_time', [$start, $end]);
+        } elseif (!$showAll) {
+            $query->whereDate('date_time', Carbon::today());
+        }
+
+        // Apply search filter if provided
+        if ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('voucher_number', 'like', "%{$searchTerm}%")
+                    ->orWhere('reference_note', 'like', "%{$searchTerm}%")
+                    ->orWhere('narration', 'like', "%{$searchTerm}%")
+                    ->orWhereHas('expenseType', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    })
+                    ->orWhereHas('supplier', function ($q) use ($searchTerm) {
+                        $q->where('name', 'like', "%{$searchTerm}%");
+                    });
+            });
+        }
+
+        // Calculate total amount for remaining records
+        $totalAmount = $query->sum('payment_amount');
+
+        $expenses = $query->latest()->paginate(10, ['*'], 'page', $page);
+
+        if ($expenses->isEmpty() && $page > 1) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Expense deleted successfully',
+                'redirect' => true,
+                'redirectUrl' => route('expenses.index', ['page' => $page - 1, 'show_all' => $showAll, 'search' => $searchTerm, 'start_date' => $startDate, 'end_date' => $endDate]),
+                'totalAmount' => number_format($totalAmount, 2),
+            ]);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Expense updated successfully',
-            'expense' => $expense->load('expenseType', 'createdBy', 'bankAccount', 'supplier')
-        ]);
-    }
-
-   public function destroy(Expense $expense)
-{
-    // Delete related supplier transaction
-    SupplierTransaction::where('expense_id', $expense->id)->delete();
-
-    // ❗ Delete related transaction entry
-    Transaction::where('expense_id', $expense->id)->delete();
-
-    // Delete the expense
-    $expense->delete();
-
-    $page = request()->input('page', 1);
-    $showAll = request()->input('show_all', 0);
-    $companyId = auth()->user()->company_id;
-
-    $query = Expense::with(['expenseType', 'createdBy', 'bankAccount', 'supplier'])
-        ->where('company_id', $companyId);
-
-    if (!$showAll) {
-        $query->whereDate('date_time', Carbon::today());
-    }
-
-    $expenses = $query->latest()->paginate(10, ['*'], 'page', $page);
-
-    if ($expenses->isEmpty() && $page > 1) {
-        return response()->json([
-            'success' => true,
             'message' => 'Expense deleted successfully',
-            'redirect' => true,
-            'redirectUrl' => route('expenses.index', ['page' => $page - 1, 'show_all' => $showAll])
+            'expenses' => $expenses->items(),
+            'totalAmount' => number_format($totalAmount, 2),
+            'html' => view('frontend.pages.expenses.index', [
+                'expenses' => $expenses,
+                'expenseTypes' => ExpenseType::where('company_id', $companyId)->orderBy('name', 'asc')->get(),
+                'bankAccounts' => BankAccount::where('company_id', $companyId)->where('is_active', 1)->orderBy('account_name', 'asc')->get(),
+                'suppliers' => Supplier::where('company_id', $companyId)->where('status', 1)->orderBy('name', 'asc')->get(),
+                'totalAmount' => $totalAmount
+            ])->render()
         ]);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Expense deleted successfully',
-        'expenses' => $expenses->items()
-    ]);
-}
-
 }

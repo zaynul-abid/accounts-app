@@ -20,8 +20,14 @@ class IncomeController extends Controller
         $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
             ->where('company_id', $companyId);
 
-        // Filter by current day unless show_all is requested
-        if (!$request->has('show_all') || !$request->input('show_all')) {
+        // Apply date range filter if provided
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $end = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('date_time', [$start, $end]);
+        }
+        // Otherwise, apply default today filter unless show_all is requested
+        elseif (!$request->has('show_all') || !$request->input('show_all')) {
             $query->whereDate('date_time', Carbon::today());
         }
 
@@ -38,6 +44,10 @@ class IncomeController extends Controller
             });
         }
 
+        // Calculate total amount for all matching records
+        $totalAmount = $query->sum('receipt_amount');
+
+        // Paginate the results
         $incomes = $query->latest()->paginate(10)->appends($request->except('page'));
 
         // Sort income types alphabetically
@@ -52,12 +62,14 @@ class IncomeController extends Controller
             ->get();
 
         if ($request->ajax()) {
-            return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'))->render();
+            return response()->json([
+                'html' => view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts', 'totalAmount'))->render(),
+                'totalAmount' => number_format($totalAmount, 2),
+            ]);
         }
 
-        return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts'));
+        return view('frontend.pages.incomes.index', compact('incomes', 'incomeTypes', 'bankAccounts', 'totalAmount'));
     }
-
 
     public function store(Request $request)
     {
@@ -135,63 +147,121 @@ class IncomeController extends Controller
         ]);
     }
 
-    public function update(Request $request, Income $income)
-    {
-        $validated = $request->validate([
-            'income_type_id' => 'required|exists:income_types,id',
-            'voucher_number' => 'required|string|max:255',
-            'reference_note' => 'nullable|string|max:255',
-            'bank_account_id' => 'required_if:receipt_mode,bank|exists:bank_accounts,id|nullable',
-            'date_time' => 'required|date',
-            'receipt_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
-            'receipt_amount' => 'required|numeric|min:0',
-            'narration' => 'nullable|string',
-        ]);
+  public function update(Request $request, Income $income)
+{
+    $validated = $request->validate([
+        'income_type_id' => 'required|exists:income_types,id',
+        'voucher_number' => 'required|string|max:255',
+        'reference_note' => 'nullable|string|max:255',
+        'bank_account_id' => 'required_if:receipt_mode,bank|exists:bank_accounts,id|nullable',
+        'date_time' => 'required|date',
+        'receipt_mode' => 'required|in:cash,bank,credit,touch&go,boost,duitinow',
+        'receipt_amount' => 'required|numeric|min:0',
+        'narration' => 'nullable|string',
+    ]);
 
+    DB::beginTransaction();
+
+    try {
+
+        // 1. Update the income table
         $income->update($validated);
+
+        // 2. Update the related transaction entry
+        $transaction = Transaction::where('income_id', $income->id)->first();
+
+        if ($transaction) {
+            // Update existing transaction
+            $transaction->update([
+                'date' => \Carbon\Carbon::parse($validated['date_time'])->toDateString(),
+                'transaction_type' => $income->incomeType->name,
+                'payment_mode' => $validated['receipt_mode'],
+                'bank_id' => $validated['bank_account_id'],
+                'debit' => $validated['receipt_amount'],
+                  'credit' => '0'
+            ]);
+        } else {
+            // If missing, create a new one
+            Transaction::create([
+                'company_id' => $income->company_id,
+                'date' => \Carbon\Carbon::parse($validated['date_time'])->toDateString(),
+                'transaction_mode' => 'income',
+                'income_id' => $income->id,
+                'expense_id' => null,
+                'transaction_type' => $income->incomeType->name,
+                'payment_mode' => $validated['receipt_mode'],
+                'bank_id' => $validated['bank_account_id'],
+                'debit' => $validated['receipt_amount'],
+                'credit' => '0',
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        DB::commit();
 
         return response()->json([
             'success' => true,
-            'message' => 'Income updated successfully',
+            'message' => 'Income & transaction updated successfully',
             'income' => $income->load('incomeType', 'createdBy', 'bankAccount')
         ]);
+
+    } catch (\Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Update failed: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
-   public function destroy(Income $income)
-{
-    // ❗ Delete related transaction entry
-    Transaction::where('income_id', $income->id)->delete();
 
-    // Delete the income entry
-    $income->delete();
+    public function destroy(Income $income)
+    {
+        // ❗ Delete related transaction entry
+        Transaction::where('income_id', $income->id)->delete();
 
-    $page = request()->input('page', 1);
-    $showAll = request()->input('show_all', 0);
-    $companyId = auth()->user()->company_id;
+        // Delete the income entry
+        $income->delete();
 
-    $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
-        ->where('company_id', $companyId);
+        $page = request()->input('page', 1);
+        $showAll = request()->input('show_all', 0);
+        $companyId = auth()->user()->company_id;
 
-    if (!$showAll) {
-        $query->whereDate('date_time', Carbon::today());
-    }
+        $query = Income::with(['incomeType', 'createdBy', 'bankAccount'])
+            ->where('company_id', $companyId);
 
-    $incomes = $query->latest()->paginate(10, ['*'], 'page', $page);
+        if (!$showAll) {
+            $query->whereDate('date_time', Carbon::today());
+        }
 
-    if ($incomes->isEmpty() && $page > 1) {
+        // Calculate total amount for remaining records
+        $totalAmount = $query->sum('receipt_amount');
+
+        $incomes = $query->latest()->paginate(10, ['*'], 'page', $page);
+
+        if ($incomes->isEmpty() && $page > 1) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Income deleted successfully',
+                'redirect' => true,
+                'redirectUrl' => route('incomes.index', ['page' => $page - 1, 'show_all' => $showAll]),
+                'totalAmount' => number_format($totalAmount, 2),
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Income deleted successfully',
-            'redirect' => true,
-            'redirectUrl' => route('incomes.index', ['page' => $page - 1, 'show_all' => $showAll])
+            'incomes' => $incomes->items(),
+            'totalAmount' => number_format($totalAmount, 2),
+            'html' => view('frontend.pages.incomes.index', [
+                'incomes' => $incomes,
+                'incomeTypes' => IncomeType::where('company_id', $companyId)->orderBy('name', 'asc')->get(),
+                'bankAccounts' => BankAccount::where('company_id', $companyId)->where('is_active', 1)->orderBy('account_name', 'asc')->get(),
+                'totalAmount' => $totalAmount
+            ])->render()
         ]);
     }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Income deleted successfully',
-        'incomes' => $incomes->items()
-    ]);
-}
-
 }

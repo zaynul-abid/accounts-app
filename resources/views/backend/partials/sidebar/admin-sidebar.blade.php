@@ -1,6 +1,6 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
-    <a href="/dashboard" class="brand-link bg-indigo-800">
+    <a href="{{route('admin.dashboard')}}" class="brand-link bg-indigo-800">
         <img src="{{ asset('backend/assets/dist/img/AdminLTELogo.png') }}" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-bold">Smart Pay</span>
     </a>
@@ -10,9 +10,9 @@
         <!-- User Panel -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="info">
-                <a href="#" class="d-block">{{ auth()->check() ? auth()->user()->name : 'Guest' }}</a>
-                <a href="#" class="d-block">{{ auth()->user()->company?->name ?? 'NULL' }}</a>
-                <small class="text-muted">{{ auth()->check() ? ucfirst(auth()->user()->usertype) : '' }}</small><br>
+              <span class="d-block" style="color: white">{{ auth()->check() ? auth()->user()->name : 'Guest' }} </span>
+              <span class="d-block" style="color: white">{{ auth()->user()->company?->name ?? 'NULL' }}</span>
+              <small class="text-muted">{{ auth()->check() ? ucfirst(auth()->user()->usertype) : '' }}</small><br>
                 <h6 id="current-time" class="text-muted"></h6>
             </div>
         </div>
@@ -144,16 +144,17 @@
                         </a>
                     </li>
                 @endif
-
                 <li class="nav-item mt-auto">
-                    <form method="POST" action="{{ route('logout') }}" class="w-100">
+                    <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="btn btn-danger w-100 text-left nav-link text-white" style="font-weight: bold;">
+                        <button type="submit" class="nav-link text-white bg-danger d-flex align-items-center" style="border: none; font-weight: bold;">
                             <i class="nav-icon fas fa-sign-out-alt"></i>
-                            <span class="ml-2">Logout</span>
+                            <p class="ml-2 mb-0">Logout</p>
                         </button>
                     </form>
                 </li>
+
+
             </ul>
         </nav>
     </div>
@@ -193,7 +194,7 @@
     }
     .nav-item.mt-auto {
         margin-top: auto !important;
-        padding-top: 10px;
+        padding-top: 10px; 
         border-top: 1px solid rgba(255,255,255,0.2);
     }
     .text-orange {

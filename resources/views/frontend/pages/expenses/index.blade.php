@@ -420,6 +420,9 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Expense Records</h6>
             <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
                 <button class="btn btn-outline-primary btn-sm" id="showAllButton">Show All</button>
                 <div class="input-group input-group-sm search-input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Search...">
@@ -492,7 +495,7 @@
                 </table>
             </div>
             <div class="mt-3 fw-semibold">
-                Total Amount: <span id="totalAmount">0.00</span>
+                Total Amount: <span id="totalAmount">{{ number_format($totalAmount, 2) }}</span>
             </div>
             <nav class="mt-3 pagination-container" aria-label="Page navigation">
                 {{ $expenses->appends(request()->except('page'))->links('vendor.pagination.bootstrap-5') }}
@@ -683,6 +686,32 @@
     </div>
 </div>
 
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter by Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="filter_start_date" class="form-label">Start Date</label>
+                    <input type="date" id="filter_start_date" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="filter_end_date" class="form-label">End Date</label>
+                    <input type="date" id="filter_end_date" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" id="clearDateFilter">Clear</button>
+                <button type="button" class="btn btn-primary" id="applyDateFilter">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -704,18 +733,10 @@
 
         // Track show all state
         let showAll = false;
+        let startDate = null;
+        let endDate = null;
 
-        // Calculate and update total amount
-        function updateTotalAmount() {
-            let total = 0;
-            $('#expenseTable tbody tr:visible').each(function() {
-                const amount = parseFloat($(this).find('td[data-amount]').data('amount')) || 0;
-                total += amount;
-            });
-            $('#totalAmount').text(total.toFixed(2));
-        }
-
-        // Set current date and hidden time
+        // Set current date and update total amount
         function setCurrentDateTime() {
             const now = new Date();
             const formattedDate = now.toISOString().slice(0, 10);
@@ -759,23 +780,15 @@
             updatePaymentModeFields();
         });
 
-        // Search functionality
+        // Server-side search on button click
         $('#searchButton').click(function() {
-            const searchTerm = $('#searchInput').val().toLowerCase();
-            $('#expenseTable tbody tr').each(function(index) {
-                const rowText = $(this).text().toLowerCase();
-                $(this).toggle(rowText.includes(searchTerm));
-                if (rowText.includes(searchTerm)) {
-                    $(this).find('td:first').text(index + 1);
-                }
-            });
-            updateTotalAmount();
+            loadExpenses(1, showAll);
         });
 
-        // Clear search on input clear
+        // Reload on input clear
         $('#searchInput').on('input', function() {
             if ($(this).val() === '') {
-                loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
+                loadExpenses(1, showAll);
             }
         });
 
@@ -786,15 +799,30 @@
             loadExpenses(1, showAll);
         });
 
+        // Apply filter button in modal
+        $('#applyDateFilter').click(function() {
+            startDate = $('#filter_start_date').val();
+            endDate = $('#filter_end_date').val();
+            $('#filterModal').modal('hide');
+            loadExpenses(1, showAll);
+        });
+
+        // Clear filter button in modal
+        $('#clearDateFilter').click(function() {
+            $('#filter_start_date').val('');
+            $('#filter_end_date').val('');
+            startDate = null;
+            endDate = null;
+            $('#filterModal').modal('hide');
+            loadExpenses(1, showAll);
+        });
+
         // Narration modal handling
         $('#narrationModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             const narration = button.data('narration');
             $('#narrationContent').text(narration);
         });
-
-        // Initial total amount calculation
-        updateTotalAmount();
 
         // Expense Type Modal handling
         $('#expenseTypeModal').on('show.bs.modal', function (event) {
@@ -1141,7 +1169,10 @@
                             } else {
                                 $row.fadeOut(300, function() {
                                     $(this).remove();
-                                    loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
+                                    $('#expenseTableBody').html($(response.html).find('#expenseTableBody').html());
+                                    $('.pagination-container').html($(response.html).find('.pagination-container').html());
+                                    $('#totalAmount').text(response.totalAmount);
+                                    attachPaginationListeners();
                                 });
                                 Swal.fire({
                                     title: 'Deleted!',
@@ -1170,14 +1201,20 @@
             $.ajax({
                 url: '{{ route("expenses.index") }}',
                 method: 'GET',
-                data: { page: page, search: searchTerm, show_all: showAll ? 1 : 0 },
+                data: {
+                    page: page,
+                    search: searchTerm,
+                    show_all: showAll ? 1 : 0,
+                    start_date: startDate,
+                    end_date: endDate
+                },
                 success: function(response) {
                     // Update table body
-                    $('#expenseTableBody').html($(response).find('#expenseTableBody').html());
+                    $('#expenseTableBody').html($(response.html).find('#expenseTableBody').html());
                     // Update pagination
-                    $('.pagination-container').html($(response).find('.pagination-container').html());
-                    // Update total amount
-                    updateTotalAmount();
+                    $('.pagination-container').html($(response.html).find('.pagination-container').html());
+                    // Update total amount from server
+                    $('#totalAmount').text(response.totalAmount);
                     // Re-attach pagination event listeners
                     attachPaginationListeners();
                 },
@@ -1212,7 +1249,7 @@
                 expense.payment_mode === 'bank' ? 'bg-primary' :
                     expense.payment_mode === 'credit' ? 'bg-info' :
                         expense.payment_mode === 'touch&go' ? 'bg-warning' :
-                            expense.payment_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+                            expense.payment_mode === 'boost' ? 'bg-dark' : 'bg-danger';
             const formattedMode = expense.payment_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
             const rowCount = $('#expenseTable tbody tr').length + 1;
 
@@ -1246,6 +1283,8 @@
             $('#expenseTable tbody tr').each(function(index) {
                 $(this).find('td:first').text(index + 1);
             });
+            // Reload to get updated total
+            loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
         }
 
         // Update expense in table
@@ -1255,7 +1294,7 @@
                 expense.payment_mode === 'bank' ? 'bg-primary' :
                     expense.payment_mode === 'credit' ? 'bg-info' :
                         expense.payment_mode === 'touch&go' ? 'bg-warning' :
-                            expense.payment_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+                            expense.payment_mode === 'boost' ? 'bg-dark' : 'bg-danger';
             const formattedMode = expense.payment_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
 
             const $row = $(`#expenseTable tbody tr[data-expense-id="${expense.id}"]`);
@@ -1290,7 +1329,8 @@
             $('#expenseTable tbody tr').each(function(index) {
                 $(this).find('td:first').text(index + 1);
             });
-            updateTotalAmount();
+            // Reload to get updated total
+            loadExpenses($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
         }
     });
 </script>

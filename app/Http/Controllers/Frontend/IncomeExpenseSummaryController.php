@@ -8,6 +8,7 @@ use App\Models\Income;
 use App\Models\OpeningBalance;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class IncomeExpenseSummaryController extends Controller
 {
@@ -50,18 +51,21 @@ class IncomeExpenseSummaryController extends Controller
         ->where('company_id', $companyId);
 
     // Apply date filters
-    if ($startDate && $endDate) {
-        $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
-        $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
-        $incomeQuery->whereBetween('date_time', [$start, $end]);
-        $expenseQuery->whereBetween('date_time', [$start, $end]);
-    } elseif (!$startDate && !$endDate) {
-        // No dates provided → fetch all data
-    } else {
-        $today = Carbon::today('Asia/Kolkata')->toDateString();
-        $incomeQuery->whereDate('date_time', $today);
-        $expenseQuery->whereDate('date_time', $today);
-    }
+       if ($startDate && $endDate) {
+           $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
+           $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
+           $incomeQuery->whereBetween('date_time', [$start, $end]);
+           $expenseQuery->whereBetween('date_time', [$start, $end]);
+       } elseif ($startDate) {
+           $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
+           $incomeQuery->where('date_time', '>=', $start);
+           $expenseQuery->where('date_time', '>=', $start);
+       } elseif ($endDate) {
+           $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
+           $incomeQuery->where('date_time', '<=', $end);
+           $expenseQuery->where('date_time', '<=', $end);
+       }
+    // else → no filter, fetch all data (do nothing)
 
     // Type filter
     if ($type === 'income') {
@@ -166,5 +170,116 @@ class IncomeExpenseSummaryController extends Controller
         'net_balance' => number_format($netBalance, 2)
     ]);
 }
+/**
+     * Exports the Income/Expense summary to a PDF based on current filters.
+     */
+    public function exportPdf(Request $request)
+    {
+        $type = $request->query('type', 'all');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $companyId = auth()->user()->company_id;
+
+        // 1. Setup Base Queries
+        $incomeQuery = Income::with(['incomeType', 'createdBy'])
+            ->where('company_id', $companyId);
+
+        $expenseQuery = Expense::with(['expenseType', 'createdBy'])
+            ->where('company_id', $companyId);
+
+        // 2. Apply Date Filters (Same logic as getData)
+        if ($startDate && $endDate) {
+            $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
+            $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
+            $incomeQuery->whereBetween('date_time', [$start, $end]);
+            $expenseQuery->whereBetween('date_time', [$start, $end]);
+        } elseif ($startDate) {
+            $start = Carbon::parse($startDate, 'Asia/Kolkata')->startOfDay();
+            $incomeQuery->where('date_time', '>=', $start);
+            $expenseQuery->where('date_time', '>=', $start);
+        } elseif ($endDate) {
+            $end = Carbon::parse($endDate, 'Asia/Kolkata')->endOfDay();
+            $incomeQuery->where('date_time', '<=', $end);
+            $expenseQuery->where('date_time', '<=', $end);
+        }
+
+        // 3. Apply Type Filters (Same logic as getData)
+        if ($type === 'income') {
+            $expenseQuery->whereRaw('1 = 0'); // Empty expense list
+        } elseif ($type === 'expense') {
+            $incomeQuery->whereRaw('1 = 0'); // Empty income list
+        }
+
+        // 4. Fetch ALL Data (No Pagination)
+        // We'll use the sorting from the request just in case, but PDF reports often use simple date sorting.
+        $incomeSortColumn = $request->query('income_sort_column', 'date_time');
+        $incomeSortOrder = $request->query('income_sort_order', 'desc');
+        $expenseSortColumn = $request->query('expense_sort_column', 'date_time');
+        $expenseSortOrder = $request->query('expense_sort_order', 'desc');
+
+        $incomes = $incomeQuery->orderBy(
+            $incomeSortColumn === 'amount' ? 'receipt_amount' :
+            ($incomeSortColumn === 'payment_mode' ? 'payment_mode' : 'date_time'),
+            $incomeSortOrder
+        )->get();
+
+        $expenses = $expenseQuery->orderBy(
+            $expenseSortColumn === 'amount' ? 'payment_amount' :
+            ($expenseSortColumn === 'payment_mode' ? 'payment_mode' : 'date_time'),
+            $expenseSortOrder
+        )->get();
+
+        // 5. Calculate Summary Totals (Same logic as getData)
+        $totalIncome = $incomes->sum('receipt_amount');
+        $totalExpense = $expenses->sum('payment_amount');
+        $balance = $totalIncome - $totalExpense;
+
+        $openingBalanceRecord = OpeningBalance::first();
+        $openingBalance = $openingBalanceRecord ? $openingBalanceRecord->opening_balance : 0;
+        $netBalance = $openingBalance + $balance;
+
+        // 6. Report Title Logic
+        $reportTitle = $this->getReportTitle($type, $startDate, $endDate);
+
+        // 7. Load View and Download PDF
+        $pdf = Pdf::loadView('frontend.pages.income-expense-summary.pdf', [ // Use a new view for PDF
+            'incomes' => $incomes,
+            'expenses' => $expenses,
+            'type' => $type,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'totalIncome' => number_format($totalIncome, 2),
+            'totalExpense' => number_format($totalExpense, 2),
+            'balance' => number_format($balance, 2),
+            'openingBalance' => number_format($openingBalance, 2),
+            'netBalance' => number_format($netBalance, 2),
+            'currency' => '₹', // Assuming Indian Rupee based on time zone
+        ]);
+
+        return $pdf->download($reportTitle . '.pdf');
+    }
+
+    /**
+     * Helper function to generate dynamic title for PDF file
+     */
+    protected function getReportTitle(string $type, ?string $startDate, ?string $endDate): string
+    {
+        $typeMap = ['all' => 'Summary', 'income' => 'Income', 'expense' => 'Expense'];
+        $title = $typeMap[$type] ?? 'Summary';
+
+        if ($startDate && $endDate) {
+            if ($startDate === $endDate) {
+                $datePart = '_On_' . $startDate;
+            } else {
+                $datePart = '_From_' . $startDate . '_To_' . $endDate;
+            }
+        } elseif (!$startDate && !$endDate) {
+            $datePart = '_All_Time';
+        } else {
+            $datePart = ''; // Should not happen with current logic, but keeps it safe
+        }
+
+        return str_replace(' ', '_', $title) . '_Report' . $datePart;
+    }
 
 }

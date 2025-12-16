@@ -64,7 +64,7 @@
 </div>
 <!-- /.content-wrapper -->
 <footer class="main-footer">
-    <strong>Copyright © 2025-2028 <a href="">Dictum Technologies</a>.</strong>
+    <strong>Copyright © 2025-2028 <span>Dictum Technologies</span>.</strong>
     All rights reserved.
     <div class="float-right d-none d-sm-inline-block">
 

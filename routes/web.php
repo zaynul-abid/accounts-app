@@ -43,6 +43,7 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
 
     Route::get('/income-expense/summary',[IncomeExpenseSummaryController::class,'Index'])->name('income-expense-summary');
     Route::get('/income-expense/summary/data', [IncomeExpenseSummaryController::class, 'getData'])->name('income-expense-summary.data');
+    Route::get('/income-expense-summary/export-pdf', [IncomeExpenseSummaryController::class, 'exportPdf'])->name('income-expense.export-pdf');
 
     Route::get('/suppliers/details', [SupplierTransactionController::class, 'index'])->name('suppliers.details');
 

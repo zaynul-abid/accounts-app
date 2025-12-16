@@ -7,131 +7,178 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('js/income-expense.js') }}"></script>
-    <style>
-        input::placeholder {
-            color: #9ca3af;
-            font-style: italic;
-        }
-        .income-only .expense-table-container {
-            display: none;
-        }
-        .expense-only .income-table-container {
-            display: none;
-        }
+  <style>
+    /* ---------------------------------------------------------------------- */
+    /* Base Styles */
+    /* ---------------------------------------------------------------------- */
+    input::placeholder {
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+    /* Layout Filters */
+    .income-only .expense-table-container {
+        display: none;
+    }
+    .expense-only .income-table-container {
+        display: none;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* Filter Section Layout (Desktop/General) */
+    /* ---------------------------------------------------------------------- */
+    .filter-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap; /* Default: try to keep in one line */
+        gap: 1rem;
+    }
+    .filter-controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap; /* Default: try to keep in one line */
+        gap: 0.5rem;
+    }
+    .date-and-buttons-container { /* NEW: Helper container for responsive control */
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap; /* Default: try to keep in one line */
+        gap: 0.5rem;
+    }
+    .date-inputs {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap; /* Default: try to keep in one line */
+        gap: 0.5rem;
+    }
+    .buttons {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap; /* Default: try to keep in one line */
+        gap: 0.5rem;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* Pagination Styles */
+    /* ---------------------------------------------------------------------- */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.75rem;
+    }
+    .pagination a, .pagination span {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.875rem;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 0.25rem;
+        transition: all 0.2s;
+        background-color: #f3f4f6;
+    }
+    .pagination a:hover {
+        background-color: #e5e7eb;
+    }
+    .pagination .active {
+        background-color: #2563eb;
+        color: white;
+    }
+    .pagination .disabled {
+        color: #9ca3af;
+        pointer-events: none;
+        background-color: #f3f4f6;
+    }
+    .pagination .page-count {
+        font-size: 0.875rem;
+        color: #374151;
+        padding: 0.25rem 0.75rem;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* Responsive Adjustments (max-width: 768px - Tablet) */
+    /* ---------------------------------------------------------------------- */
+    @media (max-width: 768px) {
         .filter-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: nowrap;
-            gap: 1rem;
+            flex-wrap: wrap; /* Allow main filter controls to wrap */
+            gap: 0.75rem;
         }
         .filter-controls {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 0.5rem;
+            flex-wrap: wrap; /* Allow date and buttons group to wrap */
+            gap: 0.75rem;
+            width: 100%; /* Take full width to ensure wrapping is effective */
+            justify-content: flex-start;
+        }
+        .date-and-buttons-container {
+            flex-wrap: wrap; /* Allow date inputs and buttons to wrap */
+            gap: 0.4rem;
+            width: 100%;
         }
         .date-inputs {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-            gap: 0.5rem;
+            flex-wrap: nowrap; /* Keep date inputs on one line if possible */
+            gap: 0.4rem;
         }
         .buttons {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap; /* Allow buttons to wrap to multiple lines */
+            gap: 0.4rem;
+        }
+        .filter-controls input,
+        .filter-controls button,
+        .filter-controls a {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .filter-controls input[type="date"] {
+            width: 110px; /* Slightly reduced width for date inputs */
+        }
+        .pagination a, .pagination span, .pagination .page-count {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+        }
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* Responsive Adjustments (max-width: 576px - Mobile) */
+    /* ---------------------------------------------------------------------- */
+    @media (max-width: 576px) {
+        .filter-container {
             gap: 0.5rem;
         }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.75rem;
+        .filter-controls {
+            gap: 0.5rem;
         }
-        .pagination a, .pagination span {
-            padding: 0.25rem 0.75rem;
-            font-size: 0.875rem;
-            color: #374151;
-            text-decoration: none;
-            border-radius: 0.25rem;
-            transition: all 0.2s;
-            background-color: #f3f4f6;
+        .date-and-buttons-container {
+            gap: 0.3rem;
         }
-        .pagination a:hover {
-            background-color: #e5e7eb;
+        .date-inputs {
+            flex-wrap: wrap; /* Force date inputs to wrap on very small screens */
+            gap: 0.3rem;
+            width: 100%; /* Ensure date inputs section takes full width */
+            justify-content: space-between;
         }
-        .pagination .active {
-            background-color: #2563eb;
-            color: white;
+        .buttons {
+            flex-wrap: wrap; /* Ensure buttons wrap */
+            gap: 0.3rem;
+            width: 100%; /* Ensure buttons section takes full width */
+            justify-content: space-between;
         }
-        .pagination .disabled {
-            color: #9ca3af;
-            pointer-events: none;
-            background-color: #f3f4f6;
+        /* Style for individual small buttons/inputs */
+        .filter-controls input,
+        .filter-controls button,
+        .filter-controls a {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
         }
-        .pagination .page-count {
-            font-size: 0.875rem;
-            color: #374151;
-            padding: 0.25rem 0.75rem;
+        .filter-controls input[type="date"] {
+            width: 90px;
         }
-        @media (max-width: 768px) {
-            .filter-container {
-                flex-wrap: nowrap;
-                gap: 0.75rem;
-            }
-            .filter-controls {
-                gap: 0.4rem;
-            }
-            .date-inputs {
-                gap: 0.4rem;
-            }
-            .buttons {
-                gap: 0.4rem;
-            }
-            .filter-controls input,
-            .filter-controls button,
-            .filter-controls a {
-                font-size: 0.75rem;
-                padding: 0.25rem 0.5rem;
-            }
-            .filter-controls input[type="date"] {
-                width: 120px;
-            }
-            .pagination a, .pagination span, .pagination .page-count {
-                padding: 0.2rem 0.6rem;
-                font-size: 0.75rem;
-            }
+        .pagination a, .pagination span, .pagination .page-count {
+            padding: 0.15rem 0.5rem;
+            font-size: 0.65rem;
         }
-        @media (max-width: 576px) {
-            .filter-container {
-                gap: 0.5rem;
-            }
-            .filter-controls {
-                gap: 0.3rem;
-            }
-            .date-inputs {
-                gap: 0.3rem;
-            }
-            .buttons {
-                gap: 0.3rem;
-            }
-            .filter-controls input,
-            .filter-controls button,
-            .filter-controls a {
-                font-size: 0.65rem;
-                padding: 0.2rem 0.4rem;
-            }
-            .filter-controls input[type="date"] {
-                width: 100px;
-            }
-            .pagination a, .pagination span, .pagination .page-count {
-                padding: 0.15rem 0.5rem;
-                font-size: 0.65rem;
-            }
-        }
-    </style>
+    }
+</style>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
 <!-- Header -->
@@ -186,6 +233,10 @@
                         class="bg-gray-100 text-gray-600 px-4 py-2 rounded hover:bg-gray-200 transition text-sm">
                     Clear
                 </button>
+                <button id="export-pdf-button"
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-sm">
+                        Export PDF
+                    </button>
                 @if(auth()->user()->isEmployee())
                     <a href="{{ route('employee.dashboard') }}"
                        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition text-sm text-center">
@@ -364,10 +415,9 @@
                 expense_page: expensePage
             };
 
-            if (applyDateFilter) {
-                data.start_date = $('#start-date').val();
-                data.end_date = $('#end-date').val();
-            }
+            data.start_date = $('#start-date').val();
+            data.end_date = $('#end-date').val();
+
 
             $.ajax({
                 url: '/income-expense/summary/data',
@@ -412,6 +462,29 @@
                 }
             });
         }
+
+        $('#export-pdf-button').on('click', function () {
+    const type = $('input[name="type"]:checked').val();
+    const startDate = $('#start-date').val();
+    const endDate = $('#end-date').val();
+
+    // Include sort parameters if you want the PDF sorted the same way
+    const incomeSortColumn = sortConfig.income.column;
+    const incomeSortOrder = sortConfig.income.order;
+    const expenseSortColumn = sortConfig.expense.column;
+    const expenseSortOrder = sortConfig.expense.order;
+
+    const params = new URLSearchParams();
+    params.append('type', type);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    params.append('income_sort_column', incomeSortColumn);
+    params.append('income_sort_order', incomeSortOrder);
+    params.append('expense_sort_column', expenseSortColumn);
+    params.append('expense_sort_order', expenseSortOrder);
+
+    window.location.href = '{{ route('income-expense.export-pdf') }}?' + params.toString();
+});
 
         function bindPaginationEvents() {
             $('#income-pagination a, #expense-pagination a').on('click', function (e) {

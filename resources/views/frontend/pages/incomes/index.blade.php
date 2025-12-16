@@ -498,6 +498,11 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Income Records</h6>
             <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <button class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+
+
                 <button class="btn btn-outline-primary btn-sm" id="showAllButton">Show All</button>
                 <div class="input-group input-group-sm search-input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Search...">
@@ -507,34 +512,38 @@
                 </div>
             </div>
         </div>
-        <div class="card-body">
-            <div class="alert alert-success alert-dismissible fade show d-none" role="alert" id="successAlert">
-                Income recorded successfully!
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-            <div class="table-container table-responsive">
-                <table class="table table-hover" id="incomeTable">
-                    <thead>
-                    <tr>
-                        <th scope="col">No</th>
-                        <th scope="col">V-Number</th>
-                        <th scope="col">Income</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Receipt Mode</th>
-                        <th scope="col" class="narration-column">Narration</th>
-                        @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                            <th scope="col">Actions</th>
-                        @endif
-                    </tr>
-                    </thead>
-                    <tbody id="incomeTableBody">
-                    @foreach($incomes as $index => $income)
-                        <tr data-income-id="{{ $income->id }}">
-                            <td>{{ $index + 1 + ($incomes->perPage() * ($incomes->currentPage() - 1)) }}</td>
-                            <td>{{ $income->voucher_number }}</td>
-                            <td>{{ $income->incomeType->name }}</td>
-                            <td data-amount="{{ $income->receipt_amount }}">{{ number_format($income->receipt_amount, 2) }}</td>
-                            <td>
+
+    </div>
+    <div class="card-body">
+
+
+        <div class="alert alert-success alert-dismissible fade show d-none" role="alert" id="successAlert">
+            Income recorded successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div class="table-container table-responsive">
+            <table class="table table-hover" id="incomeTable">
+                <thead>
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">V-Number</th>
+                    <th scope="col">Income</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Receipt Mode</th>
+                    <th scope="col" class="narration-column">Narration</th>
+                    @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
+                        <th scope="col">Actions</th>
+                    @endif
+                </tr>
+                </thead>
+                <tbody id="incomeTableBody">
+                @foreach($incomes as $index => $income)
+                    <tr data-income-id="{{ $income->id }}">
+                        <td>{{ $index + 1 + ($incomes->perPage() * ($incomes->currentPage() - 1)) }}</td>
+                        <td>{{ $income->voucher_number }}</td>
+                        <td>{{ $income->incomeType->name }}</td>
+                        <td data-amount="{{ $income->receipt_amount }}">{{ number_format($income->receipt_amount, 2) }}</td>
+                        <td>
                                 <span class="badge {{
                                     $income->receipt_mode == 'cash' ? 'bg-success' :
                                     ($income->receipt_mode == 'bank' ? 'bg-primary' :
@@ -543,170 +552,198 @@
                                     ($income->receipt_mode == 'boost' ? 'bg-dark' : 'bg-danger')))) }}">
                                     {{ ucfirst(str_replace('&', ' & ', $income->receipt_mode)) }}
                                 </span>
-                            </td>
-                            <td class="narration-column">
-                                <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
-                                    View Narration
+                        </td>
+                        <td class="narration-column">
+                            <button type="button" class="btn btn-sm btn-outline-info narration-btn" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
+                                View Narration
+                            </button>
+                        </td>
+                        @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
+                            <td class="action-buttons">
+                                <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning rounded-3 edit-income" data-income-id="{{ $income->id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger rounded-3 delete-income" data-income-id="{{ $income->id }}">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </td>
-                            @if(auth()->check() && (auth()->user()->usertype === 'admin' || auth()->user()->usertype === 'superadmin'))
-                                <td class="action-buttons">
-                                    <button type="button" class="btn btn-sm btn-narration-mobile rounded-3 d-block d-sm-none" data-bs-toggle="modal" data-bs-target="#narrationModal" data-narration="{{ $income->narration ?? '-' }}">
-                                        <i class="fas fa-comment"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-warning rounded-3 edit-income" data-income-id="{{ $income->id }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger rounded-3 delete-income" data-income-id="{{ $income->id }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            @endif
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-2 fw-semibold">
-                Total Amount: <span id="totalAmount">0.00</span>
-            </div>
-            <nav class="mt-2 pagination-container" aria-label="Page navigation">
-                {{ $incomes->appends(request()->except('page'))->links('vendor.pagination.bootstrap-5') }}
-            </nav>
+                        @endif
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
         </div>
+        <div class="mt-2 fw-semibold">
+            Total Amount: <span id="totalAmount">{{ number_format($totalAmount, 2) }}</span>
+        </div>
+        <nav class="mt-2 pagination-container" aria-label="Page navigation">
+            {{ $incomes->appends(request()->except('page'))->links('vendor.pagination.bootstrap-5') }}
+        </nav>
     </div>
+</div>
 
-    <!-- Narration Modal -->
-    <div class="modal fade" id="narrationModal" tabindex="-1" aria-labelledby="narrationModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="narrationModalLabel">Narration Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p id="narrationContent" class="text-gray-700"></p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                </div>
+<!-- Narration Modal -->
+<div class="modal fade" id="narrationModal" tabindex="-1" aria-labelledby="narrationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="narrationModalLabel">Narration Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-    </div>
-
-    <!-- Income Type Modal -->
-    <div class="modal fade" id="incomeTypeModal" tabindex="-1" aria-labelledby="incomeTypeModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <form id="incomeTypeForm" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Add New Income Type</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="formSuccess" class="alert alert-success d-none"></div>
-                        <div id="formError" class="alert alert-danger d-none"></div>
-                        <div class="mb-3">
-                            <label for="nameField" class="form-label required-field">Income Type Name</label>
-                            <input type="text" name="name" class="form-control" id="nameField" required />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="descriptionField" class="form-label">Description</label>
-                            <textarea name="description" class="form-control" id="descriptionField"></textarea>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="typeField" class="form-label required-field">Type</label>
-                            <select name="type" class="form-select" id="typeField" required>
-                                <option value="Direct Income">Direct Income</option>
-                                <option value="Indirect Income">Indirect Income</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="statusField" class="form-label required-field">Status</label>
-                            <select name="status" class="form-select" id="statusField" required>
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary btn-sm" id="submitButton">Save</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Bank Account Modal -->
-    <div class="modal fade" id="bankAccountModal" tabindex="-1" aria-labelledby="bankAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <form id="bankAccountForm" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="bankModalTitle">Add New Bank Account</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="bankFormSuccess" class="alert alert-success d-none"></div>
-                        <div id="bankFormError" class="alert alert-danger d-none"></div>
-                        <div class="mb-3">
-                            <label for="accountNameField" class="form-label required-field">Account Name</label>
-                            <input type="text" name="account_name" class="form-control" id="accountNameField" required />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="accountNumberField" class="form-label required-field">Account Number</label>
-                            <input type="text" name="account_number" class="form-control" id="accountNumberField" required />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="bankNameField" class="form-label required-field">Bank Name</label>
-                            <input type="text" name="bank_name" class="form-control" id="bankNameField" required />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="branchNameField" class="form-label">Branch Name</label>
-                            <input type="text" name="branch_name" class="form-control" id="branchNameField" />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="ifscCodeField" class="form-label">IFSC Code</label>
-                            <input type="text" name="ifsc_code" class="form-control" id="ifscCodeField" />
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="accountTypeField" class="form-label required-field">Account Type</label>
-                            <select name="account_type" class="form-select" id="accountTypeField" required>
-                                <option value="savings">Savings</option>
-                                <option value="current">Current</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="isActiveField" class="form-label required-field">Status</label>
-                            <select name="is_active" class="form-select" id="isActiveField" required>
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary btn-sm" id="bankSubmitButton">Save</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    </div>
-                </div>
-            </form>
+            <div class="modal-body">
+                <p id="narrationContent" class="text-gray-700"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Income Type Modal -->
+<div class="modal fade" id="incomeTypeModal" tabindex="-1" aria-labelledby="incomeTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="incomeTypeForm" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add New Income Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="formSuccess" class="alert alert-success d-none"></div>
+                    <div id="formError" class="alert alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label for="nameField" class="form-label required-field">Income Type Name</label>
+                        <input type="text" name="name" class="form-control" id="nameField" required />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descriptionField" class="form-label">Description</label>
+                        <textarea name="description" class="form-control" id="descriptionField"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="typeField" class="form-label required-field">Type</label>
+                        <select name="type" class="form-select" id="typeField" required>
+                            <option value="Direct Income">Direct Income</option>
+                            <option value="Indirect Income">Indirect Income</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="statusField" class="form-label required-field">Status</label>
+                        <select name="status" class="form-select" id="statusField" required>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-sm" id="submitButton">Save</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bank Account Modal -->
+<div class="modal fade" id="bankAccountModal" tabindex="-1" aria-labelledby="bankAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="bankAccountForm" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bankModalTitle">Add New Bank Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="bankFormSuccess" class="alert alert-success d-none"></div>
+                    <div id="bankFormError" class="alert alert-danger d-none"></div>
+                    <div class="mb-3">
+                        <label for="accountNameField" class="form-label required-field">Account Name</label>
+                        <input type="text" name="account_name" class="form-control" id="accountNameField" required />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountNumberField" class="form-label required-field">Account Number</label>
+                        <input type="text" name="account_number" class="form-control" id="accountNumberField" required />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bankNameField" class="form-label required-field">Bank Name</label>
+                        <input type="text" name="bank_name" class="form-control" id="bankNameField" required />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="branchNameField" class="form-label">Branch Name</label>
+                        <input type="text" name="branch_name" class="form-control" id="branchNameField" />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ifscCodeField" class="form-label">IFSC Code</label>
+                        <input type="text" name="ifsc_code" class="form-control" id="ifscCodeField" />
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountTypeField" class="form-label required-field">Account Type</label>
+                        <select name="account_type" class="form-select" id="accountTypeField" required>
+                            <option value="savings">Savings</option>
+                            <option value="current">Current</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="isActiveField" class="form-label required-field">Status</label>
+                        <select name="is_active" class="form-select" id="isActiveField" required>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary btn-sm" id="bankSubmitButton">Save</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<!-- 🔥 Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content rounded-3 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter by Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="filter_start_date" class="form-label">Start Date</label>
+                    <input type="date" id="filter_start_date" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label for="filter_end_date" class="form-label">End Date</label>
+                    <input type="date" id="filter_end_date" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" id="clearDateFilter">Clear</button>
+                <button type="button" class="btn btn-primary" id="applyDateFilter">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -727,15 +764,9 @@
         });
 
         let showAll = false;
+        let startDate = null; // 🔥 NEW
+        let endDate = null;   // 🔥 NEW
 
-        function updateTotalAmount() {
-            let total = 0;
-            $('#incomeTable tbody tr:visible').each(function() {
-                const amount = parseFloat($(this).find('td[data-amount]').data('amount')) || 0;
-                total += amount;
-            });
-            $('#totalAmount').text(total.toFixed(2));
-        }
 
         function setCurrentDateTime() {
             const now = new Date();
@@ -765,7 +796,6 @@
                     $(this).find('td:first').text(index + 1);
                 }
             });
-            updateTotalAmount();
         });
 
         $('#searchInput').on('input', function() {
@@ -780,13 +810,32 @@
             loadIncomes(1, showAll);
         });
 
+        // Apply filter button in modal
+        $('#applyDateFilter').click(function() {
+            startDate = $('#filter_start_date').val();
+            endDate = $('#filter_end_date').val();
+            $('#filterModal').modal('hide');
+            loadIncomes(1, showAll);
+        });
+
+        // Clear filter button in modal
+        $('#clearDateFilter').click(function() {
+            $('#filter_start_date').val('');
+            $('#filter_end_date').val('');
+            startDate = null;
+            endDate = null;
+            $('#filterModal').modal('hide');
+            loadIncomes(1, showAll);
+        });
+
+
         $('#narrationModal').on('show.bs.modal', function (event) {
             const button = $(event.relatedTarget);
             const narration = button.data('narration');
             $('#narrationContent').text(narration);
         });
 
-        updateTotalAmount();
+
 
         $('#incomeTypeModal').on('show.bs.modal', function (event) {
             $('#incomeTypeForm')[0].reset();
@@ -1045,7 +1094,10 @@
                             } else {
                                 $row.fadeOut(300, function() {
                                     $(this).remove();
-                                    loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
+                                    $('#incomeTableBody').html($(response.html).find('#incomeTableBody').html());
+                                    $('.pagination-container').html($(response.html).find('.pagination-container').html());
+                                    $('#totalAmount').text(response.totalAmount); // Update total amount
+                                    attachPaginationListeners();
                                 });
                                 Swal.fire({
                                     title: 'Deleted!',
@@ -1073,11 +1125,16 @@
             $.ajax({
                 url: '{{ route("incomes.index") }}',
                 method: 'GET',
-                data: { page: page, search: searchTerm, show_all: showAll ? 1 : 0 },
+                data: { page: page,
+                    search: searchTerm,
+                    show_all: showAll ? 1 : 0,
+                    start_date: startDate,
+                    end_date: endDate
+                },
                 success: function(response) {
-                    $('#incomeTableBody').html($(response).find('#incomeTableBody').html());
-                    $('.pagination-container').html($(response).find('.pagination-container').html());
-                    updateTotalAmount();
+                    $('#incomeTableBody').html($(response.html).find('#incomeTableBody').html());
+                    $('.pagination-container').html($(response.html).find('.pagination-container').html());
+                    $('#totalAmount').text(response.totalAmount); // Update total amount from server
                     attachPaginationListeners();
                 },
                 error: function(xhr) {
@@ -1105,10 +1162,10 @@
         function addIncomeToTable(income) {
             const formattedAmount = parseFloat(income.receipt_amount).toFixed(2);
             const badgeClass = income.receipt_mode === 'cash' ? 'bg-success' :
-                income.recept_mode === 'bank' ? 'bg-primary' :
+                income.receipt_mode === 'bank' ? 'bg-primary' :
                     income.receipt_mode === 'credit' ? 'bg-info' :
                         income.receipt_mode === 'touch&go' ? 'bg-warning' :
-                            income.receipt_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+                            income.receipt_mode === 'boost' ? 'bg-dark' : 'bg-danger';
             const formattedMode = income.receipt_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
             const rowCount = $('#incomeTable tbody tr').length + 1;
 
@@ -1143,6 +1200,8 @@
             $('#incomeTable tbody tr').each(function(index) {
                 $(this).find('td:first').text(index + 1);
             });
+            // Reload incomes to get updated total amount
+            loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
         }
 
         function updateIncomeInTable(income) {
@@ -1151,7 +1210,7 @@
                 income.receipt_mode === 'bank' ? 'bg-primary' :
                     income.receipt_mode === 'credit' ? 'bg-info' :
                         income.receipt_mode === 'touch&go' ? 'bg-warning' :
-                            income.receipt_mode === 'boost' ? 'bg-danger' : 'bg-secondary';
+                            income.receipt_mode === 'boost' ? 'bg-dark' : 'bg-danger';
             const formattedMode = income.receipt_mode.replace('&', ' & ').replace(/(^\w|\s\w)/g, c => c.toUpperCase());
 
             const $row = $(`#incomeTable tbody tr[data-income-id="${income.id}"]`);
@@ -1187,7 +1246,8 @@
             $('#incomeTable tbody tr').each(function(index) {
                 $(this).find('td:first').text(index + 1);
             });
-            updateTotalAmount();
+            // Reload incomes to get updated total amount
+            loadIncomes($('.pagination .page-item.active .page-link').data('page') || 1, showAll);
         }
     });
 </script>
