@@ -21,8 +21,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'usertype',
-        'company_id',
     ];
 
     /**
@@ -46,30 +44,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->usertype === 'admin';
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        return $this->usertype === 'superadmin';
-    }
-
-    public function isEmployee(): bool
-    {
-        return $this->usertype === 'employee';
-    }
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
-
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class, 'created_by');
     }
 
 }

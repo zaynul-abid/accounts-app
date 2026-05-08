@@ -1,26 +1,18 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <!-- Brand Logo -->
-    <a href="{{route('admin.dashboard')}}" class="brand-link bg-indigo-800">
-        <img src="{{ asset('backend/assets/dist/img/AdminLTELogo.png') }}" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-bold">Smart Pay</span>
+    <a href="{{ route('admin.dashboard') }}" class="brand-link bg-indigo-800">
+        <span class="brand-text font-weight-bold">Ramanthali Committee</span>
     </a>
 
-    <!-- Sidebar -->
     <div class="sidebar">
-        <!-- User Panel -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="info">
-              <span class="d-block" style="color: white">{{ auth()->check() ? auth()->user()->name : 'Guest' }} </span>
-              <span class="d-block" style="color: white">{{ auth()->user()->company?->name ?? 'NULL' }}</span>
-              <small class="text-muted">{{ auth()->check() ? ucfirst(auth()->user()->usertype) : '' }}</small><br>
+                <span class="d-block" style="color: white">{{ auth()->check() ? auth()->user()->name : 'Guest' }}</span>
                 <h6 id="current-time" class="text-muted"></h6>
             </div>
         </div>
 
-        <!-- Sidebar Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column d-flex" style="height: 100%;" data-widget="treeview" role="menu" data-accordion="false">
-                <!-- Dashboard -->
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -28,139 +20,122 @@
                     </a>
                 </li>
 
-                <li class="nav-header text-uppercase text-xs text-muted mt-2">TRANSACTIONS</li>
+                <li class="nav-header text-uppercase text-xs text-muted mt-2">SECTIONS</li>
+
                 <li class="nav-item">
-                    <a href="{{ route('incomes.index') }}" class="nav-link {{ request()->routeIs('incomes.index') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-arrow-circle-down text-success"></i>
-                        <p>Income Entry</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('expenses.index') }}" class="nav-link {{ request()->routeIs('expenses.index') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-arrow-circle-up text-danger"></i>
-                        <p>Expense Entry</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('suppliers.details') }}" class="nav-link {{ request()->routeIs('suppliers.details') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-clipboard-list text-warning"></i>
-                        <p>Supplier Payment</p>
+                    <a href="{{ route('house-creations.index') }}" class="nav-link {{ request()->routeIs('house-creations.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-home text-success"></i>
+                        <p>House Creation</p>
                     </a>
                 </li>
 
-                <li class="nav-header text-uppercase text-xs text-muted mt-2">REPORTS</li>
                 <li class="nav-item">
-                    <a href="{{ route('income-expense-summary') }}?report=income" class="nav-link {{ request()->routeIs('income-expense-summary') && request()->query('report') === 'income' ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-line text-success"></i>
-                        <p>Income Report</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('income-expense-summary') }}?report=expense" class="nav-link {{ request()->routeIs('income-expense-summary') && request()->query('report') === 'expense' ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-line text-danger"></i>
-                        <p>Expense Report</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('income-expense-summary') }}" class="nav-link {{ request()->routeIs('income-expense-summary') && !request()->query('report') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-pie text-info"></i>
-                        <p>Summary</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('transactions.index') }}" class="nav-link {{ request()->routeIs('transactions.index') && !request()->query('report') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-file-alt text-pink"></i>
-                        <p>Account Report</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('suppliers.reports') }}" class="nav-link {{ request()->routeIs('suppliers.reports') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-tie text-orange"></i>
-                        <p>Supplier Summary</p>
+                    <a href="{{ route('members.index') }}" class="nav-link {{ request()->routeIs('members.index') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-plus text-info"></i>
+                        <p>Member Creation</p>
                     </a>
                 </li>
 
-                <li class="nav-header text-uppercase text-xs text-muted mt-2">SETTINGS</li>
+                <li class="nav-item">
+                    <a href="{{ route('members.list') }}" class="nav-link {{ request()->routeIs('members.list') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-users text-primary"></i>
+                        <p>Member List</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('member-reports.index') }}" class="nav-link {{ request()->routeIs('member-reports.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-file-invoice-dollar text-warning"></i>
+                        <p>Member Reports</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('member-reports.yearly-payment.create') }}" class="nav-link {{ request()->routeIs('member-reports.yearly-payment.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-hand-holding-usd text-primary"></i>
+                        <p>Yearly Payment</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-user-shield text-danger"></i>
+                        <p>Manage Users</p>
+                    </a>
+                </li>
+
                 @php
-                    $typeRoutes = ['income-types.index', 'expense-types.index', 'bank-accounts.index', 'suppliers.index'];
+                    $lookupType = request()->route('type');
+                    $lookupMenuOpen = request()->routeIs('admin.lookups.*');
                 @endphp
-                <li class="nav-item {{ in_array(Route::currentRouteName(), $typeRoutes) ? 'menu-open' : '' }}">
-                    <a href="#" class="nav-link {{ in_array(Route::currentRouteName(), $typeRoutes) ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-tags"></i>
+                <li class="nav-item {{ $lookupMenuOpen ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ $lookupMenuOpen ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-list"></i>
                         <p>
-                            Voucher Creation
+                            Lookup Masters
                             <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="{{ route('income-types.index') }}" class="nav-link {{ request()->routeIs('income-types.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-circle-notch text-success"></i>
-                                <p>Income Creation</p>
+                            <a href="{{ route('admin.lookups.index', 'relations') }}" class="nav-link {{ $lookupType === 'relations' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-people-arrows text-info"></i>
+                                <p>Relations</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('expense-types.index') }}" class="nav-link {{ request()->routeIs('expense-types.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-circle-notch text-danger"></i>
-                                <p>Expense Creation</p>
+                            <a href="{{ route('admin.lookups.index', 'occupations') }}" class="nav-link {{ $lookupType === 'occupations' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-briefcase text-warning"></i>
+                                <p>Occupations</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('bank-accounts.index') }}" class="nav-link {{ request()->routeIs('bank-accounts.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-university text-primary"></i>
-                                <p>Bank Accounts Creation</p>
+                            <a href="{{ route('admin.lookups.index', 'qualifications') }}" class="nav-link {{ $lookupType === 'qualifications' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-user-graduate text-success"></i>
+                                <p>Qualifications</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('suppliers.index') }}" class="nav-link {{ request()->routeIs('suppliers.index') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-user-tie text-warning"></i>
-                                <p>Suppliers Creation</p>
+                            <a href="{{ route('admin.lookups.index', 'islamic-qualifications') }}" class="nav-link {{ $lookupType === 'islamic-qualifications' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-book-reader text-primary"></i>
+                                <p>Islamic Qualifications</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.lookups.index', 'job-locations') }}" class="nav-link {{ $lookupType === 'job-locations' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-map-marker-alt text-danger"></i>
+                                <p>Job Locations</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.lookups.index', 'places') }}" class="nav-link {{ $lookupType === 'places' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-mosque text-success"></i>
+                                <p>Mahallus</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.lookups.index', 'house-types') }}" class="nav-link {{ $lookupType === 'house-types' ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-home text-info"></i>
+                                <p>House Types</p>
                             </a>
                         </li>
                     </ul>
                 </li>
 
-                @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()))
-                    <li class="nav-item">
-                        <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.index') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>User Management</p>
-                        </a>
-                    </li>
-                @endif
-
-                <li class="nav-item">
-                    <a href="{{ route('opening-balances.index') }}" class="nav-link {{ request()->routeIs('opening-balances.index') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-landmark"></i>
-                        <p>Opening Balances</p>
-                    </a>
-                </li>
-
-                @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()))
-                    <li class="nav-item">
-                        <a href="{{ route('companies.index') }}" class="nav-link {{ request()->routeIs('companies.index') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-building"></i>
-                            <p>Company Management</p>
-                        </a>
-                    </li>
-                @endif
                 <li class="nav-item mt-auto">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="nav-link text-white bg-danger d-flex align-items-center" style="border: none; font-weight: bold;">
+                        <button type="submit" class="nav-link text-white bg-danger d-flex align-items-center" style="border: none; font-weight: bold; width: 100%;">
                             <i class="nav-icon fas fa-sign-out-alt"></i>
                             <p class="ml-2 mb-0">Logout</p>
                         </button>
                     </form>
                 </li>
-
-
             </ul>
         </nav>
     </div>
 </aside>
 
-<!-- Custom CSS -->
 <style>
     .brand-link {
         transition: all 0.3s ease;
@@ -194,15 +169,11 @@
     }
     .nav-item.mt-auto {
         margin-top: auto !important;
-        padding-top: 10px; 
+        padding-top: 10px;
         border-top: 1px solid rgba(255,255,255,0.2);
-    }
-    .text-orange {
-        color: orange !important;
     }
 </style>
 
-<!-- JS for Time -->
 <script>
     function updateTime() {
         const now = new Date();
@@ -210,5 +181,5 @@
         document.getElementById('current-time').textContent = time;
     }
     setInterval(updateTime, 1000);
-    updateTime(); // initial call
+    updateTime();
 </script>

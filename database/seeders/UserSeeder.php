@@ -18,26 +18,11 @@ class UserSeeder extends Seeder
         User::query()->delete();
 
 
-        // Create admin users
+        // Create default user
         User::create([
-            'name' => 'Admin User',
+            'name' => 'Default User',
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
-            'usertype' => 'admin',
-        ]);
-
-        User::create([
-            'name' => 'Employee User',
-            'email' => 'employee@example.com',
-            'password' => Hash::make('password'),
-            'usertype' => 'employee',
-        ]);
-
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@example.com',
-            'password' => Hash::make('password'),
-            'usertype' => 'superadmin',
         ]);
     }
 }
