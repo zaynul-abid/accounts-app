@@ -55,12 +55,12 @@ class HouseCreationController extends Controller
             'jamath_house_no'   => 'required|string|max:50',
             'house_type_id'     => 'required|exists:house_types,id',
             'floors'            => 'required|integer|min:0',
-            'ward_no'           => 'required|string|max:50',
-            'house_no'          => 'required|string|max:50',
+            'ward_no'           => 'nullable|string|max:50',
+            'house_no'          => 'nullable|string|max:50',
             'address'           => 'nullable|string',
             'phone'             => 'nullable|string|max:20',
             'mobile'            => 'required|string|max:20',
-            'reg_fee'           => 'required|numeric|min:0',
+            'reg_fee'           => 'nullable|numeric|min:0',
             'default_amount'    => 'required_if:house_sub,1|nullable|numeric|min:0',
             'due_amount'        => 'required_if:house_sub,1|nullable|numeric|min:0',
             'owner_member_name' => 'nullable|string|max:255',
@@ -95,6 +95,9 @@ class HouseCreationController extends Controller
 
         $validated['house_sub'] = $request->has('house_sub') ? 1 : 0;
         $validated['active']    = $request->has('active') ? 1 : 0;
+        $validated['ward_no']   = $validated['ward_no'] ?? '';
+        $validated['house_no']  = $validated['house_no'] ?? '';
+        $validated['reg_fee']   = $validated['reg_fee'] ?? 0;
 
         $houseData = Arr::only($validated, [
             'registration_date',
@@ -175,12 +178,12 @@ class HouseCreationController extends Controller
             'jamath_house_no'   => 'required|string|max:50',
             'house_type_id'     => 'required|exists:house_types,id',
             'floors'            => 'required|integer|min:0',
-            'ward_no'           => 'required|string|max:50',
-            'house_no'          => 'required|string|max:50',
+            'ward_no'           => 'nullable|string|max:50',
+            'house_no'          => 'nullable|string|max:50',
             'address'           => 'nullable|string',
             'phone'             => 'nullable|string|max:20',
             'mobile'            => 'required|string|max:20',
-            'reg_fee'           => 'required|numeric|min:0',
+            'reg_fee'           => 'nullable|numeric|min:0',
             'default_amount'    => 'required_if:house_sub,1|nullable|numeric|min:0',
             'due_amount'        => 'required_if:house_sub,1|nullable|numeric|min:0',
         ], [], [
@@ -189,6 +192,9 @@ class HouseCreationController extends Controller
 
         $validated['house_sub'] = $request->has('house_sub') ? 1 : 0;
         $validated['active']    = $request->has('active') ? 1 : 0;
+        $validated['ward_no']   = $validated['ward_no'] ?? '';
+        $validated['house_no']  = $validated['house_no'] ?? '';
+        $validated['reg_fee']   = $validated['reg_fee'] ?? 0;
 
         if ((int) $validated['place_id'] !== (int) $houseCreation->place_id || blank($houseCreation->sl_number)) {
             $validated['sl_number'] = SlNumberGenerator::forHouse(

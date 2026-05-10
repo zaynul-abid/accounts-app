@@ -139,12 +139,12 @@
                         <input type="number" class="form-control" id="floors" name="floors" value="{{ old('floors', 1) }}" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label required-field">Ward No</label>
-                        <input type="text" class="form-control" id="ward_no" name="ward_no" value="{{ old('ward_no') }}" required>
+                        <label class="form-label">Ward No</label>
+                        <input type="text" class="form-control" id="ward_no" name="ward_no" value="{{ old('ward_no') }}">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label required-field">House No</label>
-                        <input type="text" class="form-control" id="house_no" name="house_no" value="{{ old('house_no') }}" required>
+                        <label class="form-label">House No</label>
+                        <input type="text" class="form-control" id="house_no" name="house_no" value="{{ old('house_no') }}">
                     </div>
                     <div class="col-md-12">
                         <label class="form-label">Full Address</label>
@@ -165,8 +165,8 @@
                         <input type="tel" class="form-control" id="mobile" name="mobile" value="{{ old('mobile') }}" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label required-field">Reg Fee (₹)</label>
-                        <input type="number" class="form-control" id="reg_fee" name="reg_fee" value="{{ old('reg_fee', 0) }}" required>
+                        <label class="form-label">Reg Fee (₹)</label>
+                        <input type="number" class="form-control" id="reg_fee" name="reg_fee" value="{{ old('reg_fee') }}">
                     </div>
                     <div class="col-md-2">
                         <div class="form-check form-switch mb-2">
