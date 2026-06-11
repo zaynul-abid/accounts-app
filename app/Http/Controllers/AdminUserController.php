@@ -6,23 +6,28 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
     public function index()
     {
         return view('backend.pages.users.index', [
-            'users' => User::orderBy('name')->get(),
+            'users' => User::orderBy('username')->get(),
+            'roles' => User::roles(),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'username' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:users,username'],
+            'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', Rule::in(array_keys(User::roles()))],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
+
+        $validated['email'] = $validated['email'] ?? null;
 
         User::create($validated);
 
@@ -34,9 +39,12 @@ class AdminUserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'username' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('users', 'username')->ignore($user->id)],
+            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['required', Rule::in(array_keys(User::roles()))],
         ]);
+
+        $validated['email'] = $validated['email'] ?? null;
 
         $user->update($validated);
 

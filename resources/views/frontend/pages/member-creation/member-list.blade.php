@@ -7,6 +7,7 @@
     <title>Member List</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @include('partials.sweet-alert')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -202,12 +203,21 @@
                                                     data-member="{{ base64_encode(json_encode($memberPayload)) }}">
                                                 Edit
                                             </button>
-                                            @unless($isOwner)
-                                                <form method="POST" action="{{ route('members.changeOwner', ['house' => $selectedHouse->id, 'member' => $member->id]) }}" onsubmit="return confirm('Make {{ addslashes($member->name) }} the house owner?');">
+                                            @if(auth()->user()?->isAdmin() && ! $isOwner)
+                                                <form method="POST" action="{{ route('members.changeOwner', ['house' => $selectedHouse->id, 'member' => $member->id]) }}" data-confirm="Make {{ $member->name }} the house owner?" data-confirm-button="Yes, make owner">
                                                     @csrf
                                                     <button type="submit" class="rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700">Make House Owner</button>
                                                 </form>
-                                            @endunless
+                                            @endif
+                                            @if(auth()->user()?->isAdmin())
+                                                <form method="POST" action="{{ route('members.destroy', $member->id) }}" data-confirm="Are you sure you want to delete {{ $member->name }}?" data-confirm-button="Yes, delete">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="rounded-lg bg-red-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-red-700">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -415,10 +425,7 @@ $(function() {
     const form = $('#editMemberForm');
 
     function showAlert(message, ok = true) {
-        $('#pageAlert')
-            .removeClass('hidden border-emerald-200 bg-emerald-50 text-emerald-700 border-red-200 bg-red-50 text-red-700')
-            .addClass(ok ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')
-            .text(message);
+        appAlert(message, ok ? 'success' : 'error');
     }
 
     function closeModal() {
@@ -576,3 +583,4 @@ $(function() {
 </script>
 </body>
 </html>
+  

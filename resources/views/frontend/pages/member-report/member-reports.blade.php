@@ -6,6 +6,7 @@
     <title>{{ $memberInfo->name }} - Reports</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @include('partials.sweet-alert')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -114,13 +115,15 @@
                                     <a href="{{ route('member-reports.edit', $report->id) }}" class="text-emerald-600 hover:text-emerald-700 text-xs" title="Edit">
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
-                                    <form action="{{ route('member-reports.destroy', $report->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-700 text-xs" title="Delete">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if(auth()->user()?->isAdmin())
+                                        <form action="{{ route('member-reports.destroy', $report->id) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this report?" data-confirm-button="Yes, delete">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-700 text-xs" title="Delete">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

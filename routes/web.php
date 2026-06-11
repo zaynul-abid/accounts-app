@@ -20,7 +20,7 @@ Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard'
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'adminIndex'])->name('admin.dashboard');
-    Route::prefix('admin/users')->name('admin.users.')->group(function () {
+    Route::prefix('admin/users')->name('admin.users.')->middleware('admin')->group(function () {
         Route::get('/', [AdminUserController::class, 'index'])->name('index');
         Route::post('/', [AdminUserController::class, 'store'])->name('store');
         Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
@@ -28,7 +28,10 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
     });
 
-    Route::resource('house-creations', HouseCreationController::class);
+    Route::resource('house-creations', HouseCreationController::class)->except('destroy');
+    Route::delete('house-creations/{houseCreation}', [HouseCreationController::class, 'destroy'])
+        ->middleware('admin')
+        ->name('house-creations.destroy');
 
     // Member Creation Routes
     Route::get('/member/create', [MemberCreationController::class, 'index'])->name('members.index');
@@ -37,9 +40,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/member/house/{house}/details', [MemberCreationController::class, 'getHouseDetails'])->name('members.getHouseDetails');
     Route::get('/member/house/{house}/members', [MemberCreationController::class, 'getHouseMembers'])->name('members.getHouseMembers');
     Route::post('/member/store', [MemberCreationController::class, 'store'])->name('members.store');
-    Route::post('/member/house/{house}/owner/{member}', [MemberCreationController::class, 'changeOwner'])->name('members.changeOwner');
+    Route::post('/member/house/{house}/owner/{member}', [MemberCreationController::class, 'changeOwner'])->middleware('admin')->name('members.changeOwner');
     Route::put('/member/{member}/update', [MemberCreationController::class, 'update'])->name('members.update');
-    Route::delete('/member/{member}/destroy', [MemberCreationController::class, 'destroy'])->name('members.destroy');
+    Route::delete('/member/{member}/destroy', [MemberCreationController::class, 'destroy'])->middleware('admin')->name('members.destroy');
 
     Route::post('/member/relation/store', [MemberCreationController::class, 'storeRelation'])->name('relations.store');
     Route::post('/member/islamic-qualification/store', [MemberCreationController::class, 'storeIslamicQualification'])->name('islamic-qualifications.store');
@@ -67,14 +70,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{memberReport}', [MemberReportController::class, 'show'])->name('show');
         Route::get('/{memberReport}/edit', [MemberReportController::class, 'edit'])->name('edit');
         Route::put('/{memberReport}', [MemberReportController::class, 'update'])->name('update');
-        Route::delete('/{memberReport}', [MemberReportController::class, 'destroy'])->name('destroy');
+        Route::delete('/{memberReport}', [MemberReportController::class, 'destroy'])->middleware('admin')->name('destroy');
         Route::get('/member/{member}/summary', [MemberReportController::class, 'getSummary'])->name('summary');
         Route::get('/member/{member}', [MemberReportController::class, 'showByMember'])->name('show-member');
     });
 
     // House creation lookups
-    Route::resource('places', PlaceController::class);
-    Route::resource('house-types', HouseTypeController::class);
+    Route::resource('places', PlaceController::class)->except('destroy');
+    Route::delete('places/{place}', [PlaceController::class, 'destroy'])->middleware('admin')->name('places.destroy');
+    Route::resource('house-types', HouseTypeController::class)->except('destroy');
+    Route::delete('house-types/{house_type}', [HouseTypeController::class, 'destroy'])->middleware('admin')->name('house-types.destroy');
     Route::post('/places/ajax', [PlaceController::class, 'store'])->name('places.store.ajax');
     Route::post('/house-types/ajax', [HouseTypeController::class, 'store'])->name('house-types.store.ajax');
 
@@ -82,6 +87,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{type}', [LookupMasterController::class, 'index'])->name('index');
         Route::post('/{type}', [LookupMasterController::class, 'store'])->name('store');
         Route::put('/{type}/{id}', [LookupMasterController::class, 'update'])->name('update');
-        Route::delete('/{type}/{id}', [LookupMasterController::class, 'destroy'])->name('destroy');
+        Route::delete('/{type}/{id}', [LookupMasterController::class, 'destroy'])->middleware('admin')->name('destroy');
     });
 });

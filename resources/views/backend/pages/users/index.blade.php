@@ -37,13 +37,13 @@
                             <form method="POST" action="{{ route('admin.users.store') }}">
                                 @csrf
                                 <div class="form-group">
-                                    <label for="name">Name</label>
+                                    <label for="username">Username</label>
                                     <input
                                         type="text"
-                                        id="name"
-                                        name="name"
+                                        id="username"
+                                        name="username"
                                         class="form-control"
-                                        value="{{ old('name') }}"
+                                        value="{{ old('username') }}"
                                         required
                                     >
                                 </div>
@@ -55,8 +55,17 @@
                                         name="email"
                                         class="form-control"
                                         value="{{ old('email') }}"
-                                        required
                                     >
+                                </div>
+                                <div class="form-group">
+                                    <label for="role">Role</label>
+                                    <select id="role" name="role" class="form-control" required>
+                                        @foreach($roles as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('role', \App\Models\User::ROLE_STAFF) === $value)>
+                                                {{ $label }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="password">Password</label>
@@ -94,22 +103,28 @@
                                 <table class="table table-striped table-hover mb-0">
                                     <thead>
                                     <tr>
-                                        <th style="width: 24%;">Name</th>
-                                        <th style="width: 28%;">Email</th>
-                                        <th style="width: 18%;">Created</th>
-                                        <th style="width: 30%;">Actions</th>
+                                        <th style="width: 24%;">Username</th>
+                                        <th style="width: 24%;">Email</th>
+                                        <th style="width: 14%;">Role</th>
+                                        <th style="width: 14%;">Created</th>
+                                        <th style="width: 24%;">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     @forelse($users as $user)
                                         <tr>
                                             <td>
-                                                <div class="font-weight-bold">{{ $user->name }}</div>
+                                                <div class="font-weight-bold">{{ $user->username }}</div>
                                                 @if(auth()->id() === $user->id)
                                                     <small class="text-muted">Current account</small>
                                                 @endif
                                             </td>
-                                            <td>{{ $user->email }}</td>
+                                            <td>{{ $user->email ?: 'Not set' }}</td>
+                                            <td>
+                                                <span class="badge {{ $user->isAdmin() ? 'badge-danger' : 'badge-secondary' }}">
+                                                    {{ $roles[$user->role] ?? ucfirst($user->role ?? 'staff') }}
+                                                </span>
+                                            </td>
                                             <td>{{ optional($user->created_at)->format('d M Y') }}</td>
                                             <td>
                                                 <button
@@ -134,7 +149,8 @@
                                                     method="POST"
                                                     action="{{ route('admin.users.destroy', $user) }}"
                                                     class="d-inline"
-                                                    onsubmit="return confirm('Delete this user account?');"
+                                                    data-confirm="Delete this user account?"
+                                                    data-confirm-button="Yes, delete"
                                                 >
                                                     @csrf
                                                     @method('DELETE')
@@ -149,19 +165,27 @@
                                             </td>
                                         </tr>
                                         <tr class="collapse-row">
-                                            <td colspan="4" class="p-0 border-0">
+                                            <td colspan="5" class="p-0 border-0">
                                                 <div class="collapse border-top bg-light" id="edit-user-{{ $user->id }}">
                                                     <form method="POST" action="{{ route('admin.users.update', $user) }}" class="p-3">
                                                         @csrf
                                                         @method('PUT')
                                                         <div class="form-row">
-                                                            <div class="form-group col-md-5">
-                                                                <label>Name</label>
-                                                                <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
+                                                            <div class="form-group col-md-4">
+                                                                <label>Username</label>
+                                                                <input type="text" name="username" class="form-control" value="{{ $user->username }}" required>
                                                             </div>
-                                                            <div class="form-group col-md-5">
+                                                            <div class="form-group col-md-4">
                                                                 <label>Email</label>
-                                                                <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>
+                                                                <input type="email" name="email" class="form-control" value="{{ $user->email }}">
+                                                            </div>
+                                                            <div class="form-group col-md-2">
+                                                                <label>Role</label>
+                                                                <select name="role" class="form-control" required>
+                                                                    @foreach($roles as $value => $label)
+                                                                        <option value="{{ $value }}" @selected($user->role === $value)>{{ $label }}</option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
                                                             <div class="form-group col-md-2 d-flex align-items-end">
                                                                 <button type="submit" class="btn btn-primary btn-block">Save</button>
@@ -193,7 +217,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">No users found.</td>
+                                            <td colspan="5" class="text-center text-muted py-4">No users found.</td>
                                         </tr>
                                     @endforelse
                                     </tbody>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Details</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    @include('partials.sweet-alert')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -135,13 +136,15 @@
         <a href="{{ route('member-reports.edit', $memberReport->id) }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 text-white px-5 py-2.5 font-semibold hover:bg-emerald-700">
             <i class="fa-solid fa-pen"></i> Edit Report
         </a>
-        <form action="{{ route('member-reports.destroy', $memberReport->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this report?');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-red-300 text-red-600 px-5 py-2.5 font-semibold hover:bg-red-50">
-                <i class="fa-solid fa-trash"></i> Delete Report
-            </button>
-        </form>
+        @if(auth()->user()?->isAdmin())
+            <form action="{{ route('member-reports.destroy', $memberReport->id) }}" method="POST" class="inline" data-confirm="Are you sure you want to delete this report?" data-confirm-button="Yes, delete">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg border border-red-300 text-red-600 px-5 py-2.5 font-semibold hover:bg-red-50">
+                    <i class="fa-solid fa-trash"></i> Delete Report
+                </button>
+            </form>
+        @endif
         <a href="{{ route('member-reports.show-member', $memberReport->member_id) }}" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-5 py-2.5 font-semibold hover:bg-slate-50">
             <i class="fa-solid fa-arrow-left"></i> Back to Member Reports
         </a>

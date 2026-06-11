@@ -291,13 +291,15 @@
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
 
-                                <form action="{{ route('house-creations.destroy', $house->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this record?')" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-action btn-delete" title="Delete">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                @if(auth()->user()?->isAdmin())
+                                    <form action="{{ route('house-creations.destroy', $house->id) }}" method="POST" data-confirm="Are you sure you want to delete this record?" data-confirm-button="Yes, delete" style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn-action btn-delete" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -635,6 +637,7 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+@include('partials.sweet-alert')
 
 <script>
 $(document).ready(function () {
@@ -764,7 +767,7 @@ $(document).ready(function () {
     $('#saveOwnerMemberDetailsBtn').on('click', function() {
         const ownerName = $('#owner_name_modal').val().trim();
         if (!ownerName) {
-            alert('House owner name is required.');
+            appAlert('House owner name is required.');
             return;
         }
 
@@ -872,7 +875,7 @@ $(document).ready(function () {
     // Add new Mahallu via AJAX
     $('#btnSavePlace').on('click', function() {
         const name = $('#p_name').val().trim();
-        if (!name) return alert('Mahallu name is required');
+        if (!name) return appAlert('Mahallu name is required');
 
         $.post("{{ route('places.store') }}", {
             name: name,
@@ -883,14 +886,14 @@ $(document).ready(function () {
             $('#placeModal').modal('hide');
             $('#p_name, #p_desc').val('');
         }).fail(function() {
-            alert('Failed to add mahallu. Please try again.');
+            appAlert('Failed to add mahallu. Please try again.', 'error');
         });
     });
 
     // Add new House Type via AJAX
     $('#btnSaveType').on('click', function() {
         const name = $('#t_name').val().trim();
-        if (!name) return alert('Type name is required');
+        if (!name) return appAlert('Type name is required');
 
         $.post("{{ route('house-types.store') }}", {
             name: name,
@@ -901,7 +904,7 @@ $(document).ready(function () {
             $('#typeModal').modal('hide');
             $('#t_name, #t_desc').val('');
         }).fail(function() {
-            alert('Failed to add house type. Please try again.');
+            appAlert('Failed to add house type. Please try again.', 'error');
         });
     });
 
@@ -909,7 +912,7 @@ $(document).ready(function () {
     function addOwnerLookup(url, inputSelector, selectSelector, modalId) {
         const name = $(inputSelector).val().trim();
         if (!name) {
-            alert('Name is required');
+            appAlert('Name is required');
             return;
         }
 
@@ -923,7 +926,7 @@ $(document).ready(function () {
             restoreOwnerModalAfterChild = true;
         }).fail(function(xhr) {
             const message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to add';
-            alert(message);
+            appAlert(message, 'error');
         });
     }
 
@@ -962,14 +965,18 @@ $(document).ready(function () {
         const cfg = map[kind];
         if (!cfg) return;
 
-        const name = prompt(`Enter new ${cfg.label} name`);
-        if (!name || !name.trim()) return;
+        appPrompt(`Enter new ${cfg.label} name`, {
+            title: `Add ${cfg.label}`,
+            placeholder: `New ${cfg.label} name`
+        }).then(function(name) {
+            if (!name) return;
 
-        $.post(cfg.url, { name: name.trim() }, function(data) {
-            $(cfg.select).append(new Option(data.name, data.id, true, true));
-        }).fail(function(xhr) {
-            const message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to add';
-            alert(message);
+            $.post(cfg.url, { name: name }, function(data) {
+                $(cfg.select).append(new Option(data.name, data.id, true, true));
+            }).fail(function(xhr) {
+                const message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed to add';
+                appAlert(message, 'error');
+            });
         });
     });
 

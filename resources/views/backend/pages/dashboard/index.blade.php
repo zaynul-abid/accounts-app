@@ -51,14 +51,17 @@
                 'icon' => 'fa-cogs',
                 'color' => 'slate',
             ],
-            [
+        ];
+
+        if (auth()->user()?->isAdmin()) {
+            $quickActions[] = [
                 'title' => 'Manage Users',
                 'subtitle' => 'Create users, update email, password, and remove access',
                 'route' => route('admin.users.index'),
                 'icon' => 'fa-user-shield',
                 'color' => 'blue',
-            ],
-        ];
+            ];
+        }
     @endphp
 
     <section class="content mahallu-dashboard">

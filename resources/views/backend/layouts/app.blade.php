@@ -119,7 +119,7 @@
 
 
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@include('partials.sweet-alert')
 <script>
     function updateTime() {
         const now = new Date();

@@ -115,14 +115,17 @@
                                                         data-active="{{ $isActive ? 1 : 0 }}">
                                                     Edit
                                                 </button>
-                                                <form method="POST"
+                                                @if(auth()->user()?->isAdmin())
+                                                    <form method="POST"
                                                       action="{{ route('admin.lookups.destroy', ['type' => $type, 'id' => $item->id]) }}"
                                                       class="d-inline-block"
-                                                      onsubmit="return confirm('Delete this item?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                                </form>
+                                                      data-confirm="Delete this item?"
+                                                      data-confirm-button="Yes, delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

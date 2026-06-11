@@ -6,13 +6,13 @@
     <div class="sidebar">
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
             <div class="info">
-                <span class="d-block" style="color: white">{{ auth()->check() ? auth()->user()->name : 'Guest' }}</span>
+                <span class="d-block" style="color: white">{{ auth()->check() ? auth()->user()->username : 'Guest' }}</span>
                 <h6 id="current-time" class="text-muted"></h6>
             </div>
         </div>
 
-        <nav class="mt-2">
-            <ul class="nav nav-pills nav-sidebar flex-column d-flex" style="height: 100%;" data-widget="treeview" role="menu" data-accordion="false">
+        <nav class="mt-2 sidebar-nav">
+            <ul class="nav nav-pills nav-sidebar flex-column d-flex" data-widget="treeview" role="menu" data-accordion="false">
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -57,12 +57,14 @@
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-shield text-danger"></i>
-                        <p>Manage Users</p>
-                    </a>
-                </li>
+                @if(auth()->user()?->isAdmin())
+                    <li class="nav-item">
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-user-shield text-danger"></i>
+                            <p>Manage Users</p>
+                        </a>
+                    </li>
+                @endif
 
                 @php
                     $lookupType = request()->route('type');
@@ -158,13 +160,22 @@
     .main-sidebar {
         display: flex;
         flex-direction: column;
+        min-height: 100vh;
     }
     .sidebar {
         display: flex;
         flex-direction: column;
         flex: 1;
     }
+    .sidebar-nav {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+    }
     .nav-sidebar {
+        display: flex;
+        flex-direction: column;
         flex: 1;
     }
     .nav-item.mt-auto {

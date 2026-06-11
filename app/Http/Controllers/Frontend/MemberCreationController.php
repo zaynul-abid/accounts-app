@@ -20,7 +20,7 @@ class MemberCreationController extends Controller
     /**
      * Display member creation page with all lookups
      */
-    public function index()
+    public function index(Request $request)
     {
         $this->houseOwnerRelation();
         $relations = Relation::where('active', 1)->get();
@@ -30,8 +30,17 @@ class MemberCreationController extends Controller
         $jobLocations = JobLocation::where('active', 1)->get();
         $selectedHouse = null;
 
-        if ($oldHouseId = session()->getOldInput('house_id')) {
-            $selectedHouse = HouseCreation::with('place')->find($oldHouseId);
+        // Check for house_id in the request (after store) or old input (validation error)
+        $houseId = $request->input('house_id') ?? session()->getOldInput('house_id');
+
+        if ($houseId) {
+            // Load the house along with its members and their relations
+            // so the list on the right side of the form updates after store.
+            $selectedHouse = HouseCreation::with([
+                'place',
+                'members.relation',
+                'members.qualification'
+            ])->find($houseId);
         }
 
         return view('frontend.pages.member-creation.index', compact(
@@ -226,7 +235,7 @@ class MemberCreationController extends Controller
         }
 
         return redirect()
-            ->route('members.index')
+            ->route('members.index', ['house_id' => $validated['house_id']])
             ->with('success', 'Member created successfully!');
     }
 
@@ -297,9 +306,18 @@ class MemberCreationController extends Controller
             unset($validated['owner_image']);
         }
 
+        $ownerRelation = $this->houseOwnerRelation();
+        $newRelationId = (int) ($validated['relation_id'] ?? 0);
+        $currentRelationId = (int) $member->relation_id;
+
+        if (! $request->user()?->isAdmin()
+            && ($newRelationId === (int) $ownerRelation->id || $currentRelationId === (int) $ownerRelation->id)
+            && $newRelationId !== $currentRelationId) {
+            abort(403, 'Only admin users can change the house owner.');
+        }
+
         $member->update($validated);
 
-        $ownerRelation = $this->houseOwnerRelation();
         if ($ownerRelation && (int) ($validated['relation_id'] ?? 0) === (int) $ownerRelation->id) {
             $member->house?->members()
                 ->where('id', '!=', $member->id)
@@ -355,8 +373,15 @@ class MemberCreationController extends Controller
      */
     public function destroy(Member $member)
     {
+        abort_if(!auth()->user()?->isAdmin(), 403, 'Only admin users can delete members.');
+
         $member->delete();
-        return response()->json(['success' => true, 'message' => 'Member deleted successfully!']);
+
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Member deleted successfully!']);
+        }
+
+        return back()->with('success', 'Member deleted successfully!');
     }
 
     /**

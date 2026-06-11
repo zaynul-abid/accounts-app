@@ -8,6 +8,7 @@
     <title>Member Creation</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    @include('partials.sweet-alert')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body class="bg-slate-100 text-slate-800">
@@ -43,12 +44,12 @@
         <div class="xl:col-span-2 space-y-6">
             <form id="memberForm" action="{{ route('members.store') }}" method="POST" class="space-y-6">
                 @csrf
-                <input type="hidden" id="house_id" name="house_id" value="{{ old('house_id') }}">
+                <input type="hidden" id="house_id" name="house_id" value="{{ $selectedHouse->id ?? old('house_id') }}">
 
                 <section class="rounded-2xl bg-white shadow-sm border border-slate-200 p-5 lg:p-6">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <h2 class="text-lg font-semibold text-slate-900"><i class="fa-solid fa-house text-emerald-600 mr-2"></i>House Selection</h2>
-                        <button type="button" id="changeHouseBtn" class="{{ $selectedHouse ? '' : 'hidden' }} rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold hover:bg-slate-50">Change House</button>
+                        <button type="button" id="changeHouseBtn" class="{{ $selectedHouse ? '' : 'hidden' }} rounded-lg border border-red-300 text-red-600 px-3 py-1.5 text-xs font-semibold hover:bg-red-50">Clear Selection</button>
                     </div>
 
                     <div class="relative">
@@ -503,7 +504,7 @@ $(document).ready(function() {
             },
             error: function() {
                 $('#searchLoading').addClass('hidden');
-                alert('Failed to load house details.');
+                appAlert('Failed to load house details.', 'error');
             }
         });
     });
@@ -561,18 +562,14 @@ $(document).ready(function() {
     }
 
     $('#changeHouseBtn').on('click', function() {
-        $('#house_id').val('');
-        $('#houseSearch').val('');
-        $('#place_name, #house_no, #jamath_house_no, #house_name, #house_owner, #phone, #mobile').val('');
-        $('#memberList').html('<p class="text-slate-500">Select a house to view members.</p>');
-        $('#changeHouseBtn').addClass('hidden');
-        $('#houseSearch').focus();
+        // Redirect to the base index route to clear URL parameters and reset the house selection
+        window.location.href = "{{ route('members.index') }}";
     });
 
     function saveLookup(url, inputSelector, selectSelector, modalId) {
         const name = $(inputSelector).val().trim();
         if (!name) {
-            alert('Please enter a name');
+            appAlert('Please enter a name');
             return;
         }
 
@@ -590,7 +587,7 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 const message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Failed';
-                alert('Error: ' + message);
+                appAlert('Error: ' + message, 'error');
             }
         });
     }
@@ -618,7 +615,7 @@ $(document).ready(function() {
     $('#memberForm').on('submit', function(e) {
         if (!$('#house_id').val()) {
             e.preventDefault();
-            alert('Please select a house first.');
+            appAlert('Please select a house first.');
             $('#houseSearch').focus();
             return false;
         }
